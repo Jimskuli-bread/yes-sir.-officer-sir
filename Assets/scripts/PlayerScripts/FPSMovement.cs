@@ -73,7 +73,7 @@ public class FPSMovement : MonoBehaviour
 
     private void HandleGravity()
     {
-        // Normal gravity only — flight script disables this entire component
+        // Normal gravity only ï¿½ flight script disables this entire component
         velocity.y += gravity * Time.deltaTime;
     }
 }
