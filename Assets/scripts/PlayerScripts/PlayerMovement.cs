@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Rigidbody), typeof(PlayerPickup))]
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
@@ -35,6 +35,9 @@ public class PlayerMovement : MonoBehaviour
 
     void Awake()
     {
+        if (GetComponent<PlayerPickup>() == null)
+            gameObject.AddComponent<PlayerPickup>();
+
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Prevent unwanted rotation
 

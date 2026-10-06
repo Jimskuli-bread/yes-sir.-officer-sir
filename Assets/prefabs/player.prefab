@@ -46,7 +46,7 @@ GameObject:
   - component: {fileID: 5081575304202579349}
   m_Layer: 0
   m_Name: Camera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -198,6 +198,7 @@ GameObject:
   - component: {fileID: 6292024805577893241}
   - component: {fileID: 3727703949089604198}
   - component: {fileID: 603442207207581282}
+  - component: {fileID: 914305017284663201}
   m_Layer: 0
   m_Name: player
   m_TagString: Untagged
@@ -356,3 +357,19 @@ MonoBehaviour:
   moveAction: {fileID: 0}
   jumpAction: {fileID: 0}
   sprintAction: {fileID: 0}
+--- !u!114 &914305017284663201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8514406918151106316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b60ad2abad0c83646a363d1742a2361f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerPickup
+  pickupKey: 101
+  pickupRange: 4.5
+  holdPoint: {fileID: 0}
+  throwForce: 10

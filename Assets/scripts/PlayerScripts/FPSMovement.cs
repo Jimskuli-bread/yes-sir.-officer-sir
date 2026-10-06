@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(PlayerPickup))]
 public class FPSMovement : MonoBehaviour
 {
     public float moveSpeed = 12.0f;
@@ -19,6 +20,9 @@ public class FPSMovement : MonoBehaviour
 
     private void Start()
     {
+        if (GetComponent<PlayerPickup>() == null)
+            gameObject.AddComponent<PlayerPickup>();
+
         characterController = GetComponent<CharacterController>();
         cameraTransform = Camera.main.transform;
 
@@ -73,7 +77,7 @@ public class FPSMovement : MonoBehaviour
 
     private void HandleGravity()
     {
-        // Normal gravity only — flight script disables this entire component
+        // Normal gravity only ï¿½ flight script disables this entire component
         velocity.y += gravity * Time.deltaTime;
     }
 }
