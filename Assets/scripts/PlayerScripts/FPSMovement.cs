@@ -20,7 +20,8 @@ public class FPSMovement : MonoBehaviour
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
-        cameraTransform = Camera.main.transform;
+        cameraTransform = Camera.main != null ? Camera.main.transform : transform;
+        PlayerPickup.EnsureAttached(gameObject, cameraTransform);
 
         if (groundCheck == null)
         {
@@ -73,7 +74,7 @@ public class FPSMovement : MonoBehaviour
 
     private void HandleGravity()
     {
-        // Normal gravity only — flight script disables this entire component
+        // Normal gravity only ï¿½ flight script disables this entire component
         velocity.y += gravity * Time.deltaTime;
     }
 }

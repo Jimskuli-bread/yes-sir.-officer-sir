@@ -50,6 +50,7 @@ public class PlayerMovement : MonoBehaviour
             cameraTransform = Camera.main.transform;
         }
 
+        PlayerPickup.EnsureAttached(gameObject, cameraTransform);
         currentStamina = maxStamina;
     }
 

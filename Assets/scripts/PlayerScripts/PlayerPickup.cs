@@ -23,6 +23,27 @@ public class PlayerPickup : MonoBehaviour
 
     public GameObject HeldObject => heldObject;
 
+    public static PlayerPickup EnsureAttached(GameObject player, Transform viewTransform)
+    {
+        if (player == null)
+            return null;
+
+        PlayerPickup pickup = player.GetComponent<PlayerPickup>();
+        if (pickup == null)
+            pickup = player.AddComponent<PlayerPickup>();
+
+        if (pickup.holdPoint == null)
+        {
+            Transform parent = viewTransform != null ? viewTransform : player.transform;
+            GameObject holdPointObject = new GameObject("HoldPoint");
+            holdPointObject.transform.SetParent(parent, false);
+            holdPointObject.transform.localPosition = new Vector3(0.35f, -0.25f, 0.7f);
+            pickup.holdPoint = holdPointObject.transform;
+        }
+
+        return pickup;
+    }
+
     private void Awake()
     {
         if (persistentPlayer != null && persistentPlayer != this)
@@ -106,31 +127,43 @@ public class PlayerPickup : MonoBehaviour
 
     private void TryPickup()
     {
-        if (holdPoint == null || pickableLayer < 0)
+        if (holdPoint == null)
         {
-            Debug.LogWarning("Assign a hold point and a valid Pickable layer before picking up objects.");
+            Debug.LogWarning("Assign a hold point before picking up objects.");
             return;
         }
 
-        Collider[] hits = Physics.OverlapSphere(transform.position, pickupRange, 1 << pickableLayer);
-        Collider closestHit = null;
+        Collider[] hits = Physics.OverlapSphere(transform.position, pickupRange, ~0, QueryTriggerInteraction.Collide);
+        GameObject closestObject = null;
         float closestDistance = float.MaxValue;
 
         foreach (Collider hit in hits)
         {
-            float distance = (hit.transform.position - transform.position).sqrMagnitude;
+            GameObject candidate = hit.attachedRigidbody != null
+                ? hit.attachedRigidbody.gameObject
+                : hit.gameObject;
+            BananaPickup banana = candidate.GetComponent<BananaPickup>();
+            if (banana == null)
+                banana = hit.GetComponentInParent<BananaPickup>();
+
+            bool isPickableLayer = pickableLayer >= 0
+                && (hit.gameObject.layer == pickableLayer || candidate.layer == pickableLayer);
+            if (banana == null && !isPickableLayer)
+                continue;
+
+            if (banana != null)
+                candidate = banana.gameObject;
+
+            float distance = (hit.ClosestPoint(transform.position) - transform.position).sqrMagnitude;
             if (distance < closestDistance)
             {
                 closestDistance = distance;
-                closestHit = hit;
+                closestObject = candidate;
             }
         }
 
-        if (closestHit != null)
-        {
-            Rigidbody body = closestHit.attachedRigidbody;
-            PickupObject(body != null ? body.gameObject : closestHit.gameObject);
-        }
+        if (closestObject != null)
+            PickupObject(closestObject);
     }
 
     private void PickupObject(GameObject obj)
@@ -148,6 +181,10 @@ public class PlayerPickup : MonoBehaviour
         obj.transform.SetParent(holdPoint, false);
         obj.transform.localPosition = Vector3.zero;
         obj.transform.localRotation = Quaternion.identity;
+
+        BananaPickup banana = obj.GetComponent<BananaPickup>();
+        if (banana != null)
+            banana.RegisterPickup();
     }
 
     public bool TryPickupObject(GameObject obj, bool keepPlayerAcrossScenes = false)
