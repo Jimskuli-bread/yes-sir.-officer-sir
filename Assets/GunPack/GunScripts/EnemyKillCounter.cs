@@ -6,14 +6,29 @@ public class EnemyKillCounter : MonoBehaviour
     public int requiredKills = 10;
 
     public TaskManager taskManager;
+    private bool questTaskCompleted;
+
+    private void Update()
+    {
+        TryCompleteQuestTask();
+    }
 
     public void RegisterKill()
     {
         killCount++;
+        TryCompleteQuestTask();
+    }
 
-        if (killCount >= requiredKills)
+    private void TryCompleteQuestTask()
+    {
+        if (killCount >= requiredKills && !questTaskCompleted && NPC.IsTaskActive(3))
         {
-            taskManager.CompleteKillTask();
+            questTaskCompleted = true;
+            NPC.CompleteFourthTask();
+            if (taskManager != null)
+            {
+                taskManager.CompleteKillTask();
+            }
         }
     }
 }
