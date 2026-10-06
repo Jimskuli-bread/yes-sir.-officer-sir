@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerPickup : MonoBehaviour
 {
@@ -13,11 +14,20 @@ public class PlayerPickup : MonoBehaviour
     public float throwForce = 10f;
 
     private GameObject heldObject;
+    private int pickableLayer;
 
-    void Update()
+    private void Awake()
     {
-        // Toggle pickup/drop
-        if (Input.GetKeyDown(pickupKey))
+        pickableLayer = LayerMask.NameToLayer("Pickable");
+        if (pickableLayer < 0)
+        {
+            Debug.LogError("Create a layer named 'Pickable' and assign it to objects the player can pick up.");
+        }
+    }
+
+    private void Update()
+    {
+        if (WasPickupPressed())
         {
             if (heldObject == null)
                 TryPickup();
@@ -25,30 +35,72 @@ public class PlayerPickup : MonoBehaviour
                 DropObject();
         }
 
-        // Throw with left click
-        if (heldObject != null && Input.GetMouseButtonDown(0))
+        if (heldObject != null && WasThrowPressed())
         {
             ThrowObject();
         }
+    }
 
-        // Keep object locked to hold point
-        if (heldObject != null)
+    private bool WasPickupPressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current == null)
+            return false;
+
+        Key key = pickupKey switch
         {
-            heldObject.transform.position = holdPoint.position;
+            KeyCode.E => Key.E,
+            KeyCode.Q => Key.Q,
+            KeyCode.F => Key.F,
+            KeyCode.Space => Key.Space,
+            _ => Key.E
+        };
+
+        return Keyboard.current[key].wasPressedThisFrame;
+#else
+        return Input.GetKeyDown(pickupKey);
+#endif
+    }
+
+    private bool WasThrowPressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        return Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+#else
+        return Input.GetMouseButtonDown(0);
+#endif
+    }
+
+    private void TryPickup()
+    {
+        if (holdPoint == null || pickableLayer < 0)
+        {
+            Debug.LogWarning("Assign a hold point and a valid Pickable layer before picking up objects.");
+            return;
+        }
+
+        Collider[] hits = Physics.OverlapSphere(transform.position, pickupRange, 1 << pickableLayer);
+        Collider closestHit = null;
+        float closestDistance = float.MaxValue;
+
+        foreach (Collider hit in hits)
+        {
+            float distance = (hit.transform.position - transform.position).sqrMagnitude;
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestHit = hit;
+            }
+        }
+
+        if (closestHit != null)
+        {
+            Rigidbody body = closestHit.attachedRigidbody;
+            PickupObject(body != null ? body.gameObject : closestHit.gameObject);
         }
     }
 
-    void TryPickup()
-    {
-        int pickableLayer = LayerMask.NameToLayer("Pickable");
-        if (pickableLayer < 0) return;
-
-        Collider[] hits = Physics.OverlapSphere(transform.position, pickupRange, 1 << pickableLayer);
-        if (hits.Length > 0)
-            PickupObject(hits[0].gameObject);
-    }
-
-    void PickupObject(GameObject obj)
+    private void PickupObject(GameObject obj)
     {
         heldObject = obj;
 
@@ -56,16 +108,16 @@ public class PlayerPickup : MonoBehaviour
         if (rb != null)
             rb.isKinematic = true;
 
-        obj.transform.position = holdPoint.position;
-        obj.transform.SetParent(holdPoint);
+        obj.transform.SetParent(holdPoint, false);
+        obj.transform.localPosition = Vector3.zero;
+        obj.transform.localRotation = Quaternion.identity;
     }
 
-
-    void DropObject()
+    private void DropObject()
     {
         if (heldObject == null) return;
 
-        heldObject.transform.SetParent(null);
+        heldObject.transform.SetParent(null, true);
 
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
         if (rb != null)
@@ -74,10 +126,9 @@ public class PlayerPickup : MonoBehaviour
         heldObject = null;
     }
 
-
-    void ThrowObject()
+    private void ThrowObject()
     {
-        heldObject.transform.SetParent(null);
+        heldObject.transform.SetParent(null, true);
 
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
         if (rb != null)
