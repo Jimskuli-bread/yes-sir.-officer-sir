@@ -19,9 +19,18 @@ public class PlayerPickup : MonoBehaviour
 
     private GameObject heldObject;
     private int pickableLayer;
+    private static PlayerPickup persistentPlayer;
+
+    public GameObject HeldObject => heldObject;
 
     private void Awake()
     {
+        if (persistentPlayer != null && persistentPlayer != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         pickableLayer = LayerMask.NameToLayer("Pickable");
         if (pickableLayer < 0)
         {
@@ -41,7 +50,10 @@ public class PlayerPickup : MonoBehaviour
             if (heldObject == null)
                 TryPickup();
             else
+            {
+                NPC.TryDeliverRedChair(heldObject);
                 DropObject();
+            }
         }
 
         if (heldObject != null && WasThrowPressed())
@@ -138,6 +150,39 @@ public class PlayerPickup : MonoBehaviour
         obj.transform.localRotation = Quaternion.identity;
     }
 
+    public bool TryPickupObject(GameObject obj, bool keepPlayerAcrossScenes = false)
+    {
+        if (obj == null || heldObject != null || holdPoint == null)
+            return false;
+
+        if (pickableLayer >= 0)
+        {
+            obj.layer = pickableLayer;
+        }
+
+        PickupObject(obj);
+        if (keepPlayerAcrossScenes)
+        {
+            persistentPlayer = this;
+            DontDestroyOnLoad(transform.root.gameObject);
+        }
+
+        return true;
+    }
+
+    public bool ForcePickupObject(GameObject obj, bool keepPlayerAcrossScenes = false)
+    {
+        if (obj == null || holdPoint == null)
+            return false;
+
+        if (heldObject != null && heldObject != obj)
+        {
+            DropObject();
+        }
+
+        return TryPickupObject(obj, keepPlayerAcrossScenes);
+    }
+
     private void DropObject()
     {
         if (heldObject == null) return;
@@ -151,10 +196,24 @@ public class PlayerPickup : MonoBehaviour
         heldObject = null;
     }
 
+    public void ReleaseBananaForQuestReset()
+    {
+        if (heldObject != null && heldObject.GetComponent<BananaPickup>() != null)
+        {
+            DropObject();
+        }
+    }
+
     public void ThrowHeldObject()
     {
         if (heldObject == null || holdPoint == null)
             return;
+
+        RedChairQuest redChair = heldObject.GetComponent<RedChairQuest>();
+        if (redChair != null)
+        {
+            redChair.MarkThrown();
+        }
 
         heldObject.transform.SetParent(null, true);
 

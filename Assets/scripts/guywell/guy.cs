@@ -24,7 +24,7 @@ public class guy : MonoBehaviour
         }
 
         taskCompleted = true;
-        NPC.CompleteFourthTask();
+        NPC.CompleteThirdTask();
         Destroy(gameObject);
         SceneReturnTracker.ReturnToPreviousScene();
     }

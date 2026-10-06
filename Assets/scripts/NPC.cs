@@ -4,7 +4,9 @@ using UnityEngine.InputSystem;
 public class NPC : MonoBehaviour
 {
     private const string SecondTaskCompleteKey = "NPC.SecondTaskComplete";
-    private const string FourthTaskCompleteKey = "NPC.FourthTaskComplete";
+    private const string ThirdTaskCompleteKey = "NPC.ThirdTaskComplete";
+    private const string SeventhTaskCompleteKey = "NPC.SeventhTaskComplete";
+    private const string SteveFoundKey = "NPC.SteveFound";
 
     [System.Serializable]
     public class TaskStep
@@ -22,24 +24,37 @@ public class NPC : MonoBehaviour
     public float interactionRange = 3f;
     public KeyCode interactKey = KeyCode.E;
     public Transform player;
+    [SerializeField] private GameObject bananaPrefab;
+    [Header("Quest Testing")]
+    [Tooltip("Check a task here to force it complete during play mode.")]
+    [SerializeField] private bool[] testCompleteTasks = new bool[10];
 
     private int currentTaskIndex = 0;
     private bool playerNearby;
     private string currentDialogue = "";
+    private bool steveFound;
+    private bool seventhBananaSpawned;
+    private bool bananaPrefabWarningShown;
+    private int seventhDialogueStep;
+
+    public GameObject HeldObject => player != null
+        ? player.GetComponentInParent<PlayerPickup>()?.HeldObject
+        : null;
 
     private void Awake()
     {
         CreateDefaultTasks();
-        if (tasks.Length > 1 && PlayerPrefs.GetInt(SecondTaskCompleteKey, 0) == 1)
+        for (int i = 0; i < tasks.Length; i++)
         {
-            tasks[1].isComplete = true;
+            string completionKey = GetTaskCompleteKey(i);
+            if (completionKey != null && PlayerPrefs.GetInt(completionKey, 0) == 1)
+            {
+                tasks[i].isComplete = true;
+            }
         }
 
-        if (tasks.Length > 3 && PlayerPrefs.GetInt(FourthTaskCompleteKey, 0) == 1)
-        {
-            tasks[3].isComplete = true;
-        }
-
+        steveFound = PlayerPrefs.GetInt(SteveFoundKey, 0) == 1;
+        ApplyTestCompletionFlags();
         UpdateDialogueText();
     }
 
@@ -53,6 +68,13 @@ public class NPC : MonoBehaviour
 
     private void Update()
     {
+        ApplyTestCompletionFlags();
+
+        if (currentTaskIndex == 6 && !tasks[6].isComplete)
+        {
+            EnsureSeventhTaskBanana();
+        }
+
         if (player == null)
             return;
 
@@ -77,11 +99,18 @@ public class NPC : MonoBehaviour
 
         TaskStep currentTask = tasks[currentTaskIndex];
 
+        if (currentTaskIndex == 9 && steveFound && !currentTask.isComplete)
+        {
+            CompleteTask(9);
+            currentDialogue = "Screw you, I'm quitting.";
+            return;
+        }
+
         if (currentTaskIndex == 0 && BananaPickup.HasBanana)
         {
             if (!currentTask.isComplete)
             {
-                CompleteCurrentTask();
+                CompleteTask(0);
             }
 
             AdvanceTask();
@@ -99,6 +128,27 @@ public class NPC : MonoBehaviour
         {
             currentDialogue = currentTask.objective;
             currentTask.objectiveShown = true;
+            return;
+        }
+
+        if (currentTaskIndex == 6 && BananaPickup.HasBanana && !currentTask.isComplete)
+        {
+            if (seventhDialogueStep == 0)
+            {
+                currentDialogue = "You: Banana, where did my life choices go wrong?";
+                seventhDialogueStep = 1;
+                return;
+            }
+
+            CompleteTask(6);
+            currentDialogue = "Banana: ...";
+            return;
+        }
+
+        if (currentTaskIndex == 5 && !currentTask.isComplete && IsHoldingRedChair())
+        {
+            CompleteTask(5);
+            currentDialogue = currentTask.completionText;
             return;
         }
 
@@ -145,18 +195,87 @@ public class NPC : MonoBehaviour
         Debug.Log(currentDialogue);
     }
 
+    [ContextMenu("Reset Quest Progress (Testing)")]
+    public void ResetQuestProgress()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("Enter Play mode before resetting quest progress.");
+            return;
+        }
+
+        for (int i = 0; i < tasks.Length; i++)
+        {
+            if (tasks[i] != null)
+            {
+                tasks[i].isComplete = false;
+                tasks[i].storyShown = false;
+                tasks[i].objectiveShown = false;
+            }
+
+            if (testCompleteTasks != null && i < testCompleteTasks.Length)
+            {
+                testCompleteTasks[i] = false;
+            }
+
+            string completionKey = GetTaskCompleteKey(i);
+            if (completionKey != null)
+            {
+                PlayerPrefs.DeleteKey(completionKey);
+            }
+        }
+
+        PlayerPrefs.DeleteKey(SteveFoundKey);
+        PlayerPrefs.Save();
+        steveFound = false;
+        currentTaskIndex = 0;
+        seventhBananaSpawned = false;
+        seventhDialogueStep = 0;
+        currentDialogue = tasks[0].story;
+
+        PlayerPickup[] pickups = FindObjectsByType<PlayerPickup>(FindObjectsSortMode.None);
+        foreach (PlayerPickup pickup in pickups)
+        {
+            pickup.ReleaseBananaForQuestReset();
+        }
+
+        BananaPickup.ResetBanana();
+        outsidetask.ResetTimersForTesting();
+        Debug.Log("Quest progress reset for testing.");
+    }
+
     public void CompleteTask(int taskIndex)
     {
         if (taskIndex < 0 || taskIndex >= tasks.Length || tasks[taskIndex] == null)
             return;
 
-        if (taskIndex == 1 || taskIndex == 3)
+        string completionKey = GetTaskCompleteKey(taskIndex);
+        if (completionKey != null)
         {
-            PlayerPrefs.SetInt(GetTaskCompleteKey(taskIndex), 1);
+            PlayerPrefs.SetInt(completionKey, 1);
             PlayerPrefs.Save();
         }
 
         SetTaskComplete(taskIndex);
+    }
+
+    public static void CompleteTaskInLoadedScenes(int taskIndex)
+    {
+        if (taskIndex < 0 || taskIndex >= 10)
+            return;
+
+        string completionKey = GetTaskCompleteKey(taskIndex);
+        if (completionKey != null)
+        {
+            PlayerPrefs.SetInt(completionKey, 1);
+            PlayerPrefs.Save();
+        }
+
+        NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
+        foreach (NPC npc in loadedNpcs)
+        {
+            npc.SetTaskComplete(taskIndex);
+        }
     }
 
     public static void CompleteSecondTask()
@@ -164,17 +283,86 @@ public class NPC : MonoBehaviour
         CompleteTaskAcrossScenes(1);
     }
 
+    public static void CompleteThirdTask()
+    {
+        CompleteTaskAcrossScenes(2);
+    }
+
     public static void CompleteFourthTask()
     {
         CompleteTaskAcrossScenes(3);
     }
 
-    private static void CompleteTaskAcrossScenes(int taskIndex)
+    public static void RegisterSteveFound()
     {
-        PlayerPrefs.SetInt(GetTaskCompleteKey(taskIndex), 1);
+        PlayerPrefs.SetInt(SteveFoundKey, 1);
         PlayerPrefs.Save();
 
-        NPC[] loadedNpcs = FindObjectsOfType<NPC>();
+        NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
+        foreach (NPC npc in loadedNpcs)
+        {
+            npc.steveFound = true;
+        }
+    }
+
+    public static bool TryDeliverRedChair(GameObject chair)
+    {
+        if (chair == null || chair.GetComponent<RedChairQuest>() == null)
+            return false;
+
+        NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
+        foreach (NPC npc in loadedNpcs)
+        {
+            if (npc.currentTaskIndex != 5 || npc.player == null ||
+                Vector3.Distance(npc.transform.position, npc.player.position) > npc.interactionRange)
+            {
+                continue;
+            }
+
+            npc.CompleteTask(5);
+            npc.currentDialogue = npc.tasks[5].completionText;
+            return true;
+        }
+
+        return false;
+    }
+
+    public static void CompleteSeventhTaskWithBanana()
+    {
+        NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
+        foreach (NPC npc in loadedNpcs)
+        {
+            if (npc.currentTaskIndex == 6)
+            {
+                npc.CompleteTask(6);
+            }
+        }
+    }
+
+    public static bool IsTaskActive(int taskIndex)
+    {
+        NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
+        foreach (NPC npc in loadedNpcs)
+        {
+            if (npc.currentTaskIndex == taskIndex)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void CompleteTaskAcrossScenes(int taskIndex)
+    {
+        string completionKey = GetTaskCompleteKey(taskIndex);
+        if (completionKey != null)
+        {
+            PlayerPrefs.SetInt(completionKey, 1);
+            PlayerPrefs.Save();
+        }
+
+        NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
         foreach (NPC npc in loadedNpcs)
         {
             npc.SetTaskComplete(taskIndex);
@@ -183,7 +371,66 @@ public class NPC : MonoBehaviour
 
     private static string GetTaskCompleteKey(int taskIndex)
     {
-        return taskIndex == 1 ? SecondTaskCompleteKey : FourthTaskCompleteKey;
+        return taskIndex switch
+        {
+            1 => SecondTaskCompleteKey,
+            2 => ThirdTaskCompleteKey,
+            6 => SeventhTaskCompleteKey,
+            >= 0 and < 10 => "NPC.TaskComplete." + taskIndex,
+            _ => null
+        };
+    }
+
+    private void ApplyTestCompletionFlags()
+    {
+        if (testCompleteTasks == null || tasks == null)
+            return;
+
+        int count = Mathf.Min(testCompleteTasks.Length, tasks.Length);
+        for (int i = 0; i < count; i++)
+        {
+            if (testCompleteTasks[i] && tasks[i] != null && !tasks[i].isComplete)
+            {
+                SetTaskComplete(i);
+            }
+        }
+    }
+
+    private void EnsureSeventhTaskBanana()
+    {
+        if (seventhBananaSpawned)
+            return;
+
+        if (bananaPrefab == null)
+        {
+            if (!bananaPrefabWarningShown)
+            {
+                Debug.LogWarning("Assign a banana prefab on the NPC to spawn the task-seven banana.");
+                bananaPrefabWarningShown = true;
+            }
+
+            return;
+        }
+
+        if (player == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        }
+
+        PlayerPickup playerPickup = player != null
+            ? player.GetComponentInParent<PlayerPickup>()
+            : null;
+
+        if (playerPickup != null && BananaPickup.SpawnIntoHand(bananaPrefab, playerPickup))
+        {
+            seventhBananaSpawned = true;
+        }
+    }
+
+    private bool IsHoldingRedChair()
+    {
+        GameObject heldObject = HeldObject;
+        return heldObject != null && heldObject.GetComponent<RedChairQuest>() != null;
     }
 
     private void SetTaskComplete(int taskIndex)
@@ -244,44 +491,44 @@ public class NPC : MonoBehaviour
 
         string[] defaultStories =
         {
-            "The market is short on fruit today, and my stomach is growling. I was hoping for a banana before I start my long day.",
-            "The old woods keep a secret herb that only grows in the shade. The village healer says it can cure a fever.",
-            "A merchant is waiting for his wagon to roll again, but the wheels are broken and the road is getting crowded.",
-            "The town's package courier never returned from the square, and the mayor is worried the goods will spoil.",
-            "The cave has become dangerous. The townsfolk whisper that slimes are gathering near the tunnel mouth.",
-            "The tower watch is tired and the wall needs more stones before the next storm rolls in.",
-            "A farmer says a child is trapped beneath the collapsed wall near the east field. We need help now.",
-            "The village well has run dry, and the people are desperate for a fresh supply of water.",
-            "A traveler lost a key near the bridge before sunset. The whole village is searching for it.",
-            "You have become a true helper of this town, and the people are counting on your courage and kindness."
+            "Your boss wants a banana. You decide this banana is coming with you for the rest of the game.",
+            "Your boss sends you outside. There is no explanation and, apparently, no work to do.",
+            "Someone needs to be thrown into the well. The town has chosen you for this important task.",
+            "Scammers have taken over the office. Your boss says to clean it up with the gun.",
+            "You threw a red chair at a wall. Find it and apologize for your behavior.",
+            "Your boss wants the red chair. Steal it and bring it to them.",
+            "You question your life choices and the banana you are being forced to keep.",
+            "Your boss tells you to go touch grass. Fair enough.",
+            "A second banana can help you find the first one. The banana detector is back.",
+            "Your boss tells you to find Steve. When you speak to them again, tell them: 'Screw you, I'm quitting.'"
         };
 
         string[] defaultObjectives =
         {
-            "Objective: Go get me a banana.",
-            "Objective: Collect 3 herbs from the forest.",
-            "Objective: Repair the broken wagon wheel.",
-            "Objective: Deliver the package to the market.",
-            "Objective: Defeat 2 slimes in the cave.",
-            "Objective: Gather 5 stones for the tower.",
-            "Objective: Rescue the trapped villager.",
-            "Objective: Fetch water from the well.",
-            "Objective: Pick up the lost key near the bridge.",
-            "Objective: Return to the NPC and report your success."
+            "Objective: Pick up the banana and keep it with you. You may drop it briefly, but don't lose it.",
+            "Objective: Stay outside for 30 seconds.",
+            "Objective: Throw the guy into the well.",
+            "Objective: Use the gun to clear the scammers out of the office.",
+            "Objective: Find the red chair you threw at the wall and apologize to it.",
+            "Objective: Take the red chair and deliver it to your boss.",
+            "Objective: Ask the banana where your life choices went wrong.",
+            "Objective: Go outside and touch grass.",
+            "Objective: Use another banana and the banana detector to find the first banana.",
+            "Objective: Find Steve"
         };
 
         string[] defaultCompletion =
         {
-            "Thank you! I can finally eat something before the day gets worse.",
-            "Wonderful. These herbs will help the healer and keep the village strong.",
-            "Excellent. The wagon can finally move again and the merchant can continue on his route.",
-            "Perfect timing. The package is safe, and the market will be grateful.",
-            "You did it. The cave is safer now and the people can travel without fear.",
-            "The tower is stronger already. The watch will be ready for the next storm.",
-            "You saved them. The farmer is grateful, and the whole village will remember this kindness.",
-            "You brought clean water to the people. The well is alive again with hope.",
-            "You found the key. The traveler can finally leave in peace.",
-            "You completed every task. The town honors your courage and kindness."
+            "Banana secured. You will carry it for the foreseeable future.",
+            "Thirty seconds outside have passed. Nobody knows why you were sent out there.",
+            "The guy is in the well. You choose not to think too hard about it.",
+            "The scammers are gone and the office is quiet again.",
+            "You apologized to the chair. It says nothing, but the moment feels sincere.",
+            "The chair has been delivered. Your boss seems pleased.",
+            "The banana remains silent. Somehow, that feels like an answer.",
+            "You touched grass. It was grass.",
+            "The detector has led you back to the first banana. Your collection is reunited.",
+            "You quit. Steve is still missing, but that is no longer your problem."
         };
 
         for (int i = 0; i < tasks.Length; i++)
@@ -292,7 +539,6 @@ public class NPC : MonoBehaviour
             tasks[i].story = defaultStories[i];
             tasks[i].objective = defaultObjectives[i];
             tasks[i].completionText = defaultCompletion[i];
-            tasks[i].isComplete = false;
             tasks[i].storyShown = false;
             tasks[i].objectiveShown = false;
         }
@@ -300,6 +546,11 @@ public class NPC : MonoBehaviour
 
     private void OnGUI()
     {
+        if (GUI.Button(new Rect(Screen.width - 180f, 12f, 168f, 32f), "Reset Quest (Test)"))
+        {
+            ResetQuestProgress();
+        }
+
         if (player == null || !playerNearby)
             return;
 

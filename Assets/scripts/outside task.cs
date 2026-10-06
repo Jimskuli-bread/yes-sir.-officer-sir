@@ -4,17 +4,46 @@ using System.Collections;
 
 public class outsidetask : MonoBehaviour
 {
-    void Start()
+    private Coroutine taskTimer;
+
+    private void Start()
     {
-        StartCoroutine(CompleteTaskAndReturn());
+        RestartTimer();
     }
 
     private IEnumerator CompleteTaskAndReturn()
     {
+        while (!NPC.IsTaskActive(1))
+        {
+            yield return null;
+        }
+
         yield return new WaitForSeconds(30f);
+
+        if (!NPC.IsTaskActive(1))
+            yield break;
 
         NPC.CompleteSecondTask();
         SceneReturnTracker.ReturnToPreviousScene();
+    }
+
+    private void RestartTimer()
+    {
+        if (taskTimer != null)
+        {
+            StopCoroutine(taskTimer);
+        }
+
+        taskTimer = StartCoroutine(CompleteTaskAndReturn());
+    }
+
+    public static void ResetTimersForTesting()
+    {
+        outsidetask[] timers = FindObjectsByType<outsidetask>(FindObjectsSortMode.None);
+        foreach (outsidetask timer in timers)
+        {
+            timer.RestartTimer();
+        }
     }
 }
 
