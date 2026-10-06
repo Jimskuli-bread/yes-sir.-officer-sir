@@ -5267,8 +5267,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 744691924575730070, guid: 410f4d3c15cf82f418f7063439238ece, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1983348065}
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8514406918151106316, guid: 410f4d3c15cf82f418f7063439238ece, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1531541530}
   m_SourcePrefab: {fileID: 100100000, guid: 410f4d3c15cf82f418f7063439238ece, type: 3}
 --- !u!1001 &1130688130
 PrefabInstance:
@@ -5327,6 +5333,34 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e31569863d94f02418a893be76bd3391, type: 3}
+--- !u!1 &1531541523 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8514406918151106316, guid: 410f4d3c15cf82f418f7063439238ece, type: 3}
+  m_PrefabInstance: {fileID: 1039268277}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1531541529 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 744691924575730070, guid: 410f4d3c15cf82f418f7063439238ece, type: 3}
+  m_PrefabInstance: {fileID: 1039268277}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1531541530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1531541523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b60ad2abad0c83646a363d1742a2361f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerPickup
+  pickupKey: 101
+  pickupRange: 3
+  holdPoint: {fileID: 1983348065}
+  aimCamera: {fileID: 1668025890}
+  throwKey: 102
+  throwForce: 10
 --- !u!1 &1610060593
 GameObject:
   m_ObjectHideFlags: 0
@@ -5454,6 +5488,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!4 &1668025890 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4069890969715212253, guid: 410f4d3c15cf82f418f7063439238ece, type: 3}
+  m_PrefabInstance: {fileID: 1039268277}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1787634997
 GameObject:
   m_ObjectHideFlags: 0
@@ -5490,37 +5529,37 @@ MonoBehaviour:
   - story: 
     objective: 
     completionText: 
-    isComplete: 0
+    isComplete: 1
     storyShown: 0
     objectiveShown: 0
   - story: 
     objective: 
     completionText: 
-    isComplete: 0
+    isComplete: 1
     storyShown: 0
     objectiveShown: 0
   - story: 
     objective: 
     completionText: 
-    isComplete: 0
+    isComplete: 1
     storyShown: 0
     objectiveShown: 0
   - story: 
     objective: 
     completionText: 
-    isComplete: 0
+    isComplete: 1
     storyShown: 0
     objectiveShown: 0
   - story: 
     objective: 
     completionText: 
-    isComplete: 0
+    isComplete: 1
     storyShown: 0
     objectiveShown: 0
   - story: 
     objective: 
     completionText: 
-    isComplete: 0
+    isComplete: 1
     storyShown: 0
     objectiveShown: 0
   - story: 
@@ -5549,7 +5588,9 @@ MonoBehaviour:
     objectiveShown: 0
   interactionRange: 3
   interactKey: 101
-  player: {fileID: 0}
+  player: {fileID: 1531541529}
+  bananaPrefab: {fileID: 859695805543524672, guid: e31569863d94f02418a893be76bd3391, type: 3}
+  testCompleteTasks: 01010101010100000000
 --- !u!65 &1787634999
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5642,6 +5683,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1983348064
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1983348065}
+  m_Layer: 0
+  m_Name: GameObject (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1983348065
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1983348064}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.26, y: 0.259, z: 0.79}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1531541529}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

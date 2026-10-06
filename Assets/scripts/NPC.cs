@@ -68,6 +68,11 @@ public class NPC : MonoBehaviour
 
     private void Update()
     {
+        if (WasResetKeyPressed())
+        {
+            ResetQuestProgress();
+        }
+
         ApplyTestCompletionFlags();
 
         if (currentTaskIndex == 6 && !tasks[6].isComplete)
@@ -184,6 +189,15 @@ public class NPC : MonoBehaviour
         return Input.GetKeyDown(interactKey);
 #endif
     }
+
+        private bool WasResetKeyPressed()
+        {
+    #if ENABLE_INPUT_SYSTEM
+        return Keyboard.current != null && Keyboard.current.leftBracketKey.wasPressedThisFrame;
+    #else
+        return Input.GetKeyDown(KeyCode.LeftBracket);
+    #endif
+        }
 
     public void CompleteCurrentTask()
     {
@@ -491,15 +505,15 @@ public class NPC : MonoBehaviour
 
         string[] defaultStories =
         {
-            "Your boss wants a banana. You decide this banana is coming with you for the rest of the game.",
-            "Your boss sends you outside. There is no explanation and, apparently, no work to do.",
-            "Someone needs to be thrown into the well. The town has chosen you for this important task.",
-            "Scammers have taken over the office. Your boss says to clean it up with the gun.",
-            "You threw a red chair at a wall. Find it and apologize for your behavior.",
-            "Your boss wants the red chair. Steal it and bring it to them.",
-            "You question your life choices and the banana you are being forced to keep.",
-            "Your boss tells you to go touch grass. Fair enough.",
-            "A second banana can help you find the first one. The banana detector is back.",
+            "I feel like having a banana.",
+            "GO OUTSIDE!",
+            "You know my ex Pena? He is near our company well at the moment.",
+            "THE SCAMMERS ARE BACK! Go clean up.",
+            "There is a red chair that you need to go apologize to.",
+            "I want the chair.",
+            "You need help so pls go get help.",
+            "You have spent too much time on your computer so go touch grass.",
+            "Go find a banana using the other banana.",
             "Your boss tells you to find Steve. When you speak to them again, tell them: 'Screw you, I'm quitting.'"
         };
 
@@ -546,7 +560,7 @@ public class NPC : MonoBehaviour
 
     private void OnGUI()
     {
-        if (GUI.Button(new Rect(Screen.width - 180f, 12f, 168f, 32f), "Reset Quest (Test)"))
+        if (GUI.Button(new Rect(Screen.width - 180f, 12f, 168f, 32f), "Reset Quest (Å)"))
         {
             ResetQuestProgress();
         }
