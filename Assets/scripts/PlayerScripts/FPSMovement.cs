@@ -6,7 +6,6 @@ using UnityEngine;
 public class FPSMovement : MonoBehaviour
 {
     public float moveSpeed = 12.0f;
-    public float jumpHeight = 1.25f;
     public float groundDistance = 0.3f;
     public LayerMask groundLayer;
 
@@ -65,10 +64,6 @@ public class FPSMovement : MonoBehaviour
 
         characterController.Move(movement);
 
-        if (Input.GetButtonDown("Jump") && isGrounded)
-        {
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        }
 
         HandleGravity();
 
