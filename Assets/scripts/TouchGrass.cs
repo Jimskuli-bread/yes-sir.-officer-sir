@@ -1,81 +1,82 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class TouchGrass : MonoBehaviour
 {
-    [SerializeField] private Transform grassTarget;
-    [SerializeField] private float moveSpeed = 4f;
-    [SerializeField] private float touchDistance = 1f;
+    [SerializeField] private Transform grassObject;
+    [SerializeField] private float interactionDistance = 3f;
 
-    private CharacterController characterController;
-    private Rigidbody body;
-    private PlayerMovement playerMovement;
-    private FPSMovement fpsMovement;
-    private bool playerMovementWasEnabled;
-    private bool fpsMovementWasEnabled;
-    private bool isMovingToGrass;
+    private Collider grassCollider;
+    private Transform player;
+    private bool taskCompleted;
 
     private void Start()
     {
-        if (grassTarget == null)
+        if (grassObject == null)
+            grassObject = transform;
+
+        FPSMovement fpsMovement = FindObjectOfType<FPSMovement>();
+        PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
+        GameObject taggedPlayer = GameObject.FindGameObjectWithTag("Player");
+        player = fpsMovement != null ? fpsMovement.transform
+            : playerMovement != null ? playerMovement.transform
+            : taggedPlayer != null ? taggedPlayer.transform
+            : null;
+
+        if (grassObject == null)
         {
-            Debug.LogWarning("Assign a grass target to the TouchGrass component.", this);
+            Debug.LogWarning("Assign the grass Plane to the TouchGrass component.", this);
             return;
         }
 
-        characterController = GetComponent<CharacterController>();
-        body = GetComponent<Rigidbody>();
-        playerMovement = GetComponent<PlayerMovement>();
-        fpsMovement = GetComponent<FPSMovement>();
+        grassCollider = grassObject.GetComponent<Collider>();
+        if (grassCollider == null)
+            grassCollider = grassObject.GetComponentInChildren<Collider>();
 
-        playerMovementWasEnabled = playerMovement != null && playerMovement.enabled;
-        fpsMovementWasEnabled = fpsMovement != null && fpsMovement.enabled;
-
-        if (playerMovement != null)
-            playerMovement.enabled = false;
-        if (fpsMovement != null)
-            fpsMovement.enabled = false;
-
-        isMovingToGrass = true;
+        if (player == null)
+            Debug.LogWarning("TouchGrass could not find a player with FPSMovement, PlayerMovement, or the Player tag.", this);
     }
 
     private void Update()
     {
-        if (!isMovingToGrass)
+        if (taskCompleted || grassObject == null || player == null || !IsNearGrass())
             return;
 
-        Vector3 direction = grassTarget.position - transform.position;
-        direction.y = 0f;
-
-        if (direction.sqrMagnitude <= touchDistance * touchDistance)
+        if (IsInteractPressed())
         {
-            RestoreMovement();
-            return;
+            taskCompleted = true;
+            NPC.CompleteSecondTask();
+            Debug.Log("Grass task completed.", this);
         }
-
-        Vector3 step = direction.normalized * moveSpeed * Time.deltaTime;
-        if (characterController != null)
-            characterController.Move(step);
-        else if (body != null)
-            body.MovePosition(body.position + step);
-        else
-            transform.position += step;
     }
 
-    private void OnDisable()
+    private void OnGUI()
     {
-        RestoreMovement();
-    }
-
-    private void RestoreMovement()
-    {
-        if (!isMovingToGrass)
+        if (player == null || grassObject == null || !IsNearGrass())
             return;
 
-        isMovingToGrass = false;
+        string message = taskCompleted ? "Grass task complete!" : "Press E to touch the grass";
+        GUI.Label(new Rect(20f, Screen.height - 50f, 400f, 30f), message);
+    }
 
-        if (playerMovement != null)
-            playerMovement.enabled = playerMovementWasEnabled;
-        if (fpsMovement != null)
-            fpsMovement.enabled = fpsMovementWasEnabled;
+    private bool IsNearGrass()
+    {
+        if (grassCollider == null)
+            return Vector3.Distance(player.position, grassObject.position) <= interactionDistance;
+
+        Vector3 closestPoint = grassCollider.ClosestPoint(player.position);
+        return Vector3.Distance(player.position, closestPoint) <= interactionDistance;
+    }
+
+    private bool IsInteractPressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null)
+            return Keyboard.current.eKey.wasPressedThisFrame;
+
+    return false;
+#else
+        return Input.GetKeyDown(KeyCode.E);
+#endif
     }
 }
