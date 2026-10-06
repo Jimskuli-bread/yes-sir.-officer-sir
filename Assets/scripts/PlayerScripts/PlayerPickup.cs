@@ -10,7 +10,11 @@ public class PlayerPickup : MonoBehaviour
     [Header("Hold Position")]
     public Transform holdPoint;
 
+    [Header("Throw Aim")]
+    [SerializeField] private Transform aimCamera;
+
     [Header("Throw Settings")]
+    public KeyCode throwKey = KeyCode.F;
     public float throwForce = 10f;
 
     private GameObject heldObject;
@@ -22,6 +26,11 @@ public class PlayerPickup : MonoBehaviour
         if (pickableLayer < 0)
         {
             Debug.LogError("Create a layer named 'Pickable' and assign it to objects the player can pick up.");
+        }
+
+        if (aimCamera == null && Camera.main != null)
+        {
+            aimCamera = Camera.main.transform;
         }
     }
 
@@ -37,7 +46,7 @@ public class PlayerPickup : MonoBehaviour
 
         if (heldObject != null && WasThrowPressed())
         {
-            ThrowObject();
+            ThrowHeldObject();
         }
     }
 
@@ -65,9 +74,21 @@ public class PlayerPickup : MonoBehaviour
     private bool WasThrowPressed()
     {
 #if ENABLE_INPUT_SYSTEM
-        return Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+        if (Keyboard.current == null)
+            return false;
+
+        Key key = throwKey switch
+        {
+            KeyCode.E => Key.E,
+            KeyCode.Q => Key.Q,
+            KeyCode.F => Key.F,
+            KeyCode.Space => Key.Space,
+            _ => Key.F
+        };
+
+        return Keyboard.current[key].wasPressedThisFrame;
 #else
-        return Input.GetMouseButtonDown(0);
+        return Input.GetKeyDown(throwKey);
 #endif
     }
 
@@ -106,7 +127,11 @@ public class PlayerPickup : MonoBehaviour
 
         Rigidbody rb = obj.GetComponent<Rigidbody>();
         if (rb != null)
+        {
             rb.isKinematic = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
 
         obj.transform.SetParent(holdPoint, false);
         obj.transform.localPosition = Vector3.zero;
@@ -126,15 +151,26 @@ public class PlayerPickup : MonoBehaviour
         heldObject = null;
     }
 
-    private void ThrowObject()
+    public void ThrowHeldObject()
     {
+        if (heldObject == null || holdPoint == null)
+            return;
+
         heldObject.transform.SetParent(null, true);
 
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
         if (rb != null)
         {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
             rb.isKinematic = false;
-            rb.AddForce(holdPoint.forward * throwForce, ForceMode.Impulse);
+
+            PlayerMovement playerMovement = GetComponent<PlayerMovement>();
+            Transform directionSource = playerMovement != null && playerMovement.cameraTransform != null
+                ? playerMovement.cameraTransform
+                : aimCamera != null ? aimCamera : Camera.main != null ? Camera.main.transform : holdPoint;
+
+            rb.AddForce(directionSource.forward.normalized * throwForce, ForceMode.Impulse);
         }
 
         heldObject = null;
