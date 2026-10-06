@@ -838,6 +838,8 @@ MonoBehaviour:
   pickupKey: 101
   pickupRange: 3
   holdPoint: {fileID: 1456696693}
+  aimCamera: {fileID: 0}
+  throwKey: 102
   throwForce: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
