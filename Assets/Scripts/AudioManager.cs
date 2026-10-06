@@ -1,8 +1,12 @@
 
+using TMPro;
 using UnityEngine;
 
 public class AudioManager : MonoBehaviour
 {
+    const string soundVolumeKey = "SoundVolume";
+    const string musicVolumeKey = "MusicVolume";
+
     public static AudioManager instance;
 
     public AudioClip[] sounds;
@@ -10,6 +14,8 @@ public class AudioManager : MonoBehaviour
 
     public AudioClip[] musicTracks;
     public string[] musicNames;
+    public TMP_Text soundVolumeLabel;
+    public TMP_Text musicVolumeLabel;
 
     AudioSource soundSource;
     AudioSource musicSource;
@@ -27,10 +33,13 @@ public class AudioManager : MonoBehaviour
             return;
         }
 
-        soundSource = gameObject.AddComponent<AudioSource>();
-        musicSource = gameObject.AddComponent<AudioSource>();
+        AudioSource[] audioSources = GetComponents<AudioSource>();
+        musicSource = audioSources.Length > 0 ? audioSources[0] : gameObject.AddComponent<AudioSource>();
+        soundSource = audioSources.Length > 1 ? audioSources[1] : gameObject.AddComponent<AudioSource>();
 
         musicSource.loop = true;
+        SetSoundVolume(PlayerPrefs.GetFloat(soundVolumeKey, 1f));
+        SetMusicVolume(PlayerPrefs.GetFloat(musicVolumeKey, 1f));
     }
 
     public void PlaySound(string soundName)
@@ -92,17 +101,31 @@ public class AudioManager : MonoBehaviour
 
     public void SetSoundVolume(float volume)
     {
+        volume = Mathf.Clamp01(volume);
         if (soundSource != null)
         {
-            soundSource.volume = Mathf.Clamp01(volume);
+            soundSource.volume = volume;
+        }
+
+        PlayerPrefs.SetFloat(soundVolumeKey, volume);
+        if (soundVolumeLabel != null)
+        {
+            soundVolumeLabel.text = $"SOUND {Mathf.RoundToInt(volume * 100f)}%";
         }
     }
 
     public void SetMusicVolume(float volume)
     {
+        volume = Mathf.Clamp01(volume);
         if (musicSource != null)
         {
-            musicSource.volume = Mathf.Clamp01(volume);
+            musicSource.volume = volume;
+        }
+
+        PlayerPrefs.SetFloat(musicVolumeKey, volume);
+        if (musicVolumeLabel != null)
+        {
+            musicVolumeLabel.text = $"Music {Mathf.RoundToInt(volume * 100f)}%";
         }
     }
 }
