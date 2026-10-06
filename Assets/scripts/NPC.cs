@@ -3,6 +3,9 @@ using UnityEngine.InputSystem;
 
 public class NPC : MonoBehaviour
 {
+    private const string SecondTaskCompleteKey = "NPC.SecondTaskComplete";
+    private const string FourthTaskCompleteKey = "NPC.FourthTaskComplete";
+
     [System.Serializable]
     public class TaskStep
     {
@@ -27,6 +30,16 @@ public class NPC : MonoBehaviour
     private void Awake()
     {
         CreateDefaultTasks();
+        if (tasks.Length > 1 && PlayerPrefs.GetInt(SecondTaskCompleteKey, 0) == 1)
+        {
+            tasks[1].isComplete = true;
+        }
+
+        if (tasks.Length > 3 && PlayerPrefs.GetInt(FourthTaskCompleteKey, 0) == 1)
+        {
+            tasks[3].isComplete = true;
+        }
+
         UpdateDialogueText();
     }
 
@@ -130,6 +143,59 @@ public class NPC : MonoBehaviour
         tasks[currentTaskIndex].isComplete = true;
         currentDialogue = tasks[currentTaskIndex].completionText;
         Debug.Log(currentDialogue);
+    }
+
+    public void CompleteTask(int taskIndex)
+    {
+        if (taskIndex < 0 || taskIndex >= tasks.Length || tasks[taskIndex] == null)
+            return;
+
+        if (taskIndex == 1 || taskIndex == 3)
+        {
+            PlayerPrefs.SetInt(GetTaskCompleteKey(taskIndex), 1);
+            PlayerPrefs.Save();
+        }
+
+        SetTaskComplete(taskIndex);
+    }
+
+    public static void CompleteSecondTask()
+    {
+        CompleteTaskAcrossScenes(1);
+    }
+
+    public static void CompleteFourthTask()
+    {
+        CompleteTaskAcrossScenes(3);
+    }
+
+    private static void CompleteTaskAcrossScenes(int taskIndex)
+    {
+        PlayerPrefs.SetInt(GetTaskCompleteKey(taskIndex), 1);
+        PlayerPrefs.Save();
+
+        NPC[] loadedNpcs = FindObjectsOfType<NPC>();
+        foreach (NPC npc in loadedNpcs)
+        {
+            npc.SetTaskComplete(taskIndex);
+        }
+    }
+
+    private static string GetTaskCompleteKey(int taskIndex)
+    {
+        return taskIndex == 1 ? SecondTaskCompleteKey : FourthTaskCompleteKey;
+    }
+
+    private void SetTaskComplete(int taskIndex)
+    {
+        if (taskIndex < 0 || taskIndex >= tasks.Length || tasks[taskIndex] == null)
+            return;
+
+        tasks[taskIndex].isComplete = true;
+        if (currentTaskIndex == taskIndex)
+        {
+            currentDialogue = tasks[taskIndex].completionText;
+        }
     }
 
     public void AdvanceTask()

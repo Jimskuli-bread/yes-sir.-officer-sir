@@ -23,7 +23,7 @@ public class CoinReceiver : MonoBehaviour
         if (other.gameObject.name.Contains(coinPrefab.name))
         {
             Destroy(other.gameObject);
-            SceneManager.LoadScene(nextSceneName);
+            SceneReturnTracker.LoadScene(nextSceneName);
         }
     }
 }
