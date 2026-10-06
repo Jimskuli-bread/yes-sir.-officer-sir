@@ -1,8 +1,6 @@
 
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public class AudioManager : MonoBehaviour
 {
@@ -21,8 +19,6 @@ public class AudioManager : MonoBehaviour
 
     AudioSource soundSource;
     AudioSource musicSource;
-    AudioClip buttonClickClip;
-    readonly System.Collections.Generic.HashSet<Button> wiredButtons = new();
 
     void Awake()
     {
@@ -44,53 +40,6 @@ public class AudioManager : MonoBehaviour
         musicSource.loop = true;
         SetSoundVolume(PlayerPrefs.GetFloat(soundVolumeKey, 1f));
         SetMusicVolume(PlayerPrefs.GetFloat(musicVolumeKey, 1f));
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    void OnDestroy()
-    {
-        if (instance == this)
-        {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-        }
-    }
-
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        Button[] buttons = FindObjectsOfType<Button>(true);
-        foreach (Button button in buttons)
-        {
-            if (!button.gameObject.scene.IsValid() || button.gameObject.scene != scene)
-            {
-                continue;
-            }
-
-            AudioSource buttonAudioSource = button.GetComponent<AudioSource>();
-            if (buttonAudioSource != null && buttonAudioSource.clip != null)
-            {
-                buttonAudioSource.playOnAwake = false;
-                buttonAudioSource.Stop();
-                buttonClickClip ??= buttonAudioSource.clip;
-            }
-        }
-
-        if (buttonClickClip == null)
-        {
-            return;
-        }
-
-        foreach (Button button in buttons)
-        {
-            if (button.gameObject.scene == scene && wiredButtons.Add(button))
-            {
-                button.onClick.AddListener(PlayButtonClick);
-            }
-        }
-    }
-
-    void PlayButtonClick()
-    {
-        PlaySound(buttonClickClip);
     }
 
     public void PlaySound(string soundName)
@@ -107,14 +56,6 @@ public class AudioManager : MonoBehaviour
                 soundSource.PlayOneShot(sounds[i]);
                 return;
             }
-        }
-    }
-
-    public void PlaySound(AudioClip clip)
-    {
-        if (clip != null && soundSource != null)
-        {
-            soundSource.PlayOneShot(clip);
         }
     }
 
