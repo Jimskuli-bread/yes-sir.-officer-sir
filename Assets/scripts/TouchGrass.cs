@@ -39,13 +39,13 @@ public class TouchGrass : MonoBehaviour
 
     private void Update()
     {
-        if (taskCompleted || grassObject == null || player == null || !IsNearGrass())
+        if (taskCompleted || !NPC.IsTaskActive(7) || grassObject == null || player == null || !IsNearGrass())
             return;
 
         if (IsInteractPressed())
         {
             taskCompleted = true;
-            NPC.CompleteSecondTask();
+            NPC.CompleteTaskInLoadedScenes(7);
             Debug.Log("Grass task completed.", this);
             SceneReturnTracker.ReturnToPreviousScene();
         }

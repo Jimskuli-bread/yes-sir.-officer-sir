@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class NPC : MonoBehaviour
 {
@@ -56,6 +57,7 @@ public class NPC : MonoBehaviour
 
         steveFound = PlayerPrefs.GetInt(SteveFoundKey, 0) == 1;
         ApplyTestCompletionFlags();
+        currentTaskIndex = GetNextTaskIndex();
         UpdateDialogueText();
     }
 
@@ -114,6 +116,7 @@ public class NPC : MonoBehaviour
         {
             CompleteTask(9);
             currentDialogue = "Screw you, I'm quitting.";
+            SceneReturnTracker.LoadScene("Banana");
             return;
         }
 
@@ -139,6 +142,7 @@ public class NPC : MonoBehaviour
         {
             currentDialogue = currentTask.objective;
             currentTask.objectiveShown = true;
+            LoadSceneForCurrentTask();
             return;
         }
 
@@ -377,7 +381,7 @@ public class NPC : MonoBehaviour
             }
         }
 
-        return false;
+        return loadedNpcs.Length == 0 && GetNextTaskIndex() == taskIndex;
     }
 
     public static bool IsTaskActiveOrNoNpcLoaded(int taskIndex)
@@ -385,8 +389,7 @@ public class NPC : MonoBehaviour
         NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
         if (loadedNpcs.Length == 0)
         {
-            string completionKey = GetTaskCompleteKey(taskIndex);
-            return completionKey != null && PlayerPrefs.GetInt(completionKey, 0) == 0;
+            return GetNextTaskIndex() == taskIndex;
         }
 
         foreach (NPC npc in loadedNpcs)
@@ -398,6 +401,39 @@ public class NPC : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void LoadSceneForCurrentTask()
+    {
+        string sceneName = currentTaskIndex switch
+        {
+            1 => "Park",
+            2 => "guywell",
+            4 => "Red Chair",
+            7 => "Touch Grass",
+            8 => "Banana detector",
+            _ => null
+        };
+
+        if (!string.IsNullOrEmpty(sceneName) && SceneManager.GetActiveScene().name != sceneName)
+        {
+            SceneReturnTracker.LoadScene(sceneName);
+        }
+    }
+
+    private static int GetNextTaskIndex()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            if (IsRemovedTask(i))
+                continue;
+
+            string completionKey = GetTaskCompleteKey(i);
+            if (completionKey == null || PlayerPrefs.GetInt(completionKey, 0) == 0)
+                return i;
+        }
+
+        return 10;
     }
 
     private static void CompleteTaskAcrossScenes(int taskIndex)
@@ -505,9 +541,14 @@ public class NPC : MonoBehaviour
 
     public void AdvanceTask()
     {
-        if (currentTaskIndex < tasks.Length - 1)
+        currentTaskIndex++;
+        while (currentTaskIndex < tasks.Length && IsRemovedTask(currentTaskIndex))
         {
             currentTaskIndex++;
+        }
+
+        if (currentTaskIndex < tasks.Length)
+        {
             ResetCurrentTaskFlags();
             UpdateDialogueText();
             Debug.Log("Next task: " + tasks[currentTaskIndex].objective);
@@ -515,9 +556,14 @@ public class NPC : MonoBehaviour
         else
         {
             currentTaskIndex = tasks.Length;
-            currentDialogue = "You finished all 10 tasks!";
+            currentDialogue = "You finished all tasks!";
             Debug.Log(currentDialogue);
         }
+    }
+
+    private static bool IsRemovedTask(int taskIndex)
+    {
+        return taskIndex == 3 || taskIndex == 5;
     }
 
     private void ResetCurrentTaskFlags()
@@ -552,9 +598,9 @@ public class NPC : MonoBehaviour
             "I feel like having a banana.",
             "GO OUTSIDE!",
             "You know my ex Pena? He is near our company well at the moment.",
-            "THE SCAMMERS ARE BACK! Go clean up.",
+            "",
             "There is a red chair that you need to go apologize to.",
-            "I want the chair.",
+            "",
             "You need help so pls go get help.",
             "You have spent too much time on your computer so go touch grass.",
             "Go find a banana using the other banana.",
@@ -566,9 +612,9 @@ public class NPC : MonoBehaviour
             "Objective: Pick up the banana and keep it with you. You may drop it briefly, but don't lose it.",
             "Objective: Stay outside for 30 seconds.",
             "Objective: Throw the guy into the well.",
-            "Objective: Use the gun to clear the scammers out of the office.",
+            "",
             "Objective: Find the red chair you threw at the wall and apologize to it.",
-            "Objective: Take the red chair and deliver it to your boss.",
+            "",
             "Objective: Ask the banana where your life choices went wrong.",
             "Objective: Go outside and touch grass.",
             "Objective: Use another banana and the banana detector to find the first banana.",
@@ -580,9 +626,9 @@ public class NPC : MonoBehaviour
             "Banana secured. You will carry it for the foreseeable future.",
             "Thirty seconds outside have passed. Nobody knows why you were sent out there.",
             "The guy is in the well. You choose not to think too hard about it.",
-            "The scammers are gone and the office is quiet again.",
+            "",
             "You apologized to the chair. It says nothing, but the moment feels sincere.",
-            "The chair has been delivered. Your boss seems pleased.",
+            "",
             "The banana remains silent. Somehow, that feels like an answer.",
             "You touched grass. It was grass.",
             "The detector has led you back to the first banana. Your collection is reunited.",

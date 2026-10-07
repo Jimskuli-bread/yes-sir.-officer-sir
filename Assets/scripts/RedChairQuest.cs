@@ -39,6 +39,7 @@ public class RedChairQuest : MonoBehaviour
         if (WasInteractPressed())
         {
             NPC.CompleteTaskInLoadedScenes(4);
+            SceneReturnTracker.ReturnToPreviousScene();
         }
     }
 
