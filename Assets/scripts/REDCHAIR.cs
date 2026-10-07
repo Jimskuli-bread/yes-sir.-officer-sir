@@ -120,6 +120,9 @@ public class REDCHAIR : MonoBehaviour
             ? "Chair: Fine. That's enough. Pick me up and get moving."
             : "Chair: Apology accepted. Pick me up and throw me again, you idiot.";
         ShowDialogue($"You: I'm sorry I threw you.\n{chairResponse}");
+
+        if (apologiesCompleted >= apologiesRequired)
+            NPC.CompleteTaskInLoadedScenes(4);
     }
 
     public void RefusePickup(Transform interactor)
