@@ -117,18 +117,11 @@ public class Pause : MonoBehaviour
         Rect resumeRect = new Rect(actionsX, buttonsY, actionsWidth, buttonHeight);
         Rect restartRect = new Rect(actionsX, buttonsY + buttonHeight + buttonSpacing, actionsWidth, buttonHeight);
         Rect menuRect = new Rect(actionsX, buttonsY + (buttonHeight + buttonSpacing) * 2f, actionsWidth, buttonHeight);
-        Vector2 mousePosition = Event.current.mousePosition;
-        bool hoveringActions = resumeRect.Contains(mousePosition)
-            || restartRect.Contains(mousePosition)
-            || menuRect.Contains(mousePosition);
-        Sprite background = hoveringActions ? pauseBackgroundColor : pauseBackgroundGrey;
+        Sprite background = pauseBackgroundColor != null ? pauseBackgroundColor : pauseBackgroundGrey;
 
         if (background != null)
         {
-            Color previousColor = GUI.color;
-            GUI.color = new Color(1f, 1f, 1f, 0.32f);
             GUI.DrawTexture(panel, background.texture, ScaleMode.ScaleToFit, true);
-            GUI.color = previousColor;
         }
 
         GUI.Label(new Rect(actionsX, panel.y + 48f, actionsWidth, 54f), "PAUSED", titleStyle);

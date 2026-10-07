@@ -23,6 +23,7 @@ public class PlayerPickup : MonoBehaviour
     private Collider[] heldObjectColliders;
     private Vector3 heldLocalPosition;
     private Quaternion heldLocalRotation = Quaternion.identity;
+    private bool heldObjectCanRotate;
     private int pickableLayer;
     private static PlayerPickup persistentPlayer;
     private AudioListener playerAudioListener;
@@ -215,7 +216,10 @@ public class PlayerPickup : MonoBehaviour
         }
 
         heldTransform.localPosition = heldLocalPosition;
-        heldTransform.localRotation = heldLocalRotation;
+        if (!heldObjectCanRotate)
+        {
+            heldTransform.localRotation = heldLocalRotation;
+        }
     }
 
     private bool WasPickupPressed()
@@ -316,6 +320,7 @@ public class PlayerPickup : MonoBehaviour
     {
         bool isRedChair = GetRedChair(obj) != null;
         heldObject = obj;
+        heldObjectCanRotate = obj.GetComponent<BananaPickup>() != null;
         playerColliders = GetComponentsInChildren<Collider>(true);
         heldObjectColliders = obj.GetComponentsInChildren<Collider>(true);
         SetHeldObjectCollisionIgnored(true);
