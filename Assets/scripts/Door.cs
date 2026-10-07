@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 namespace DoorScript
 {
     [RequireComponent(typeof(AudioSource))]
@@ -50,6 +51,7 @@ namespace DoorScript
         [Header("Hinge System (Physics-based)")]
         [Tooltip("If true, use Unity's HingeJoint for a physical swinging door.")]
         public bool useHingeJoint = true;
+        [SerializeField] private float interactionDistance = 2.5f;
         [Tooltip("If true, uses a guaranteed kinematic side-pivot swing instead of hinge physics.")]
         public bool forceReliableSwing = true;
         [Tooltip("The angle the door swings open to (degrees)")]
@@ -311,7 +313,6 @@ namespace DoorScript
                 ApplyReliableSwing(Time.fixedDeltaTime);
                 return;
             }
-
             if (useHingeJoint && hinge != null)
             {
                 ApplySpringToHinge(hinge);
@@ -331,6 +332,68 @@ namespace DoorScript
                 float targetAngle = isOpen ? openAngle : closeAngle;
                 transform.localRotation = Quaternion.Euler(0, targetAngle, 0);
             }
+        }
+
+        private void Update()
+        {
+            if (!WasInteractPressed())
+                return;
+
+            Transform player = FindPlayerTransform();
+            if (player == null)
+                return;
+
+            Door[] doors = FindObjectsByType<Door>(FindObjectsSortMode.None);
+            Door nearestDoor = null;
+            float nearestDistance = interactionDistance;
+            foreach (Door candidate in doors)
+            {
+                float distance = candidate.DistanceToDoor(player.position);
+                if (distance <= nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearestDoor = candidate;
+                }
+            }
+
+            if (nearestDoor == this)
+                OpenDoor();
+        }
+
+        private bool WasInteractPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.E);
+#endif
+        }
+
+        private static Transform FindPlayerTransform()
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+                return player.transform;
+
+            PlayerPickup[] pickups = FindObjectsByType<PlayerPickup>(FindObjectsSortMode.None);
+            return pickups.Length > 0 ? pickups[0].transform : null;
+        }
+
+        private float DistanceToDoor(Vector3 point)
+        {
+            Collider[] colliders = GetComponentsInChildren<Collider>();
+            float closestDistance = Vector3.Distance(point, transform.position);
+            foreach (Collider doorCollider in colliders)
+            {
+                if (doorCollider == null || !doorCollider.enabled)
+                    continue;
+
+                float distance = Vector3.Distance(point, doorCollider.ClosestPoint(point));
+                if (distance < closestDistance)
+                    closestDistance = distance;
+            }
+
+            return closestDistance;
         }
 
         private void InitializeReliableSwingMode()
