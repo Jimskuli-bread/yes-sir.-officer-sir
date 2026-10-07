@@ -6,8 +6,35 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/JAM.unity
+    guid: cbf6961a7aaa4b54ab5861b413cc3616
+  - enabled: 1
+    path: Assets/Scenes/Red Chair.unity
+    guid: 68b9341714279f44289f0d06a76acb77
+  - enabled: 1
     path: Assets/Scenes/Chair.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/Office.unity
+    guid: d4776e5696400f945a9a4ca0c8532c60
+  - enabled: 1
+    path: Assets/Scenes/Banana detector.unity
+    guid: e4b8c75931955b8418ef06b8f4708854
+  - enabled: 1
+    path: Assets/Scenes/Banana.unity
+    guid: e236ef1b7cb986a41ae6d99e0b8fff71
+  - enabled: 1
+    path: Assets/Scenes/guywell.unity
+    guid: c804f499867372b41ac45ca8f4204800
+  - enabled: 1
+    path: Assets/Scenes/Park.unity
+    guid: ab14a689d9f92bc479488d374f068cde
+  - enabled: 1
+    path: Assets/Scenes/Touch Grass.unity
+    guid: a682418b9e6e5c340af9a5d5810d266d
+  - enabled: 1
+    path: Assets/Scenes/Menu.unity
+    guid: bca716a66b38ba145aac1fa4c3287a3c
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

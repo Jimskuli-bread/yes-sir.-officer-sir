@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 
 public class NPC : MonoBehaviour
 {
+    public GameObject banana;
     private const string SecondTaskCompleteKey = "NPC.SecondTaskComplete";
     private const string ThirdTaskCompleteKey = "NPC.ThirdTaskComplete";
     private const string SeventhTaskCompleteKey = "NPC.SeventhTaskComplete";
@@ -74,6 +75,11 @@ public class NPC : MonoBehaviour
         }
 
         ApplyTestCompletionFlags();
+
+        if (banana != null && tasks.Length > 1 && tasks[1].isComplete)
+        {
+            banana.SetActive(false);
+        }
 
         if (currentTaskIndex == 6 && !tasks[6].isComplete)
         {
@@ -246,6 +252,10 @@ public class NPC : MonoBehaviour
         seventhBananaSpawned = false;
         seventhDialogueStep = 0;
         currentDialogue = tasks[0].story;
+        if (banana != null)
+        {
+            banana.SetActive(true);
+        }
 
         PlayerPickup[] pickups = FindObjectsByType<PlayerPickup>(FindObjectsSortMode.None);
         foreach (PlayerPickup pickup in pickups)
@@ -321,7 +331,7 @@ public class NPC : MonoBehaviour
 
     public static bool TryDeliverRedChair(GameObject chair)
     {
-        if (chair == null || chair.GetComponent<RedChairQuest>() == null)
+        if (!HasRedChairComponent(chair))
             return false;
 
         NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
@@ -346,10 +356,13 @@ public class NPC : MonoBehaviour
         NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
         foreach (NPC npc in loadedNpcs)
         {
-            if (npc.currentTaskIndex == 6)
-            {
+            if (npc.currentTaskIndex != 6)
+                continue;
+
+            if (!npc.tasks[6].isComplete)
                 npc.CompleteTask(6);
-            }
+
+            npc.AdvanceTask();
         }
     }
 
@@ -464,7 +477,18 @@ public class NPC : MonoBehaviour
     private bool IsHoldingRedChair()
     {
         GameObject heldObject = HeldObject;
-        return heldObject != null && heldObject.GetComponent<RedChairQuest>() != null;
+        return HasRedChairComponent(heldObject);
+    }
+
+    private static bool HasRedChairComponent(GameObject obj)
+    {
+        return obj != null &&
+               (obj.GetComponent<RedChairQuest>() != null ||
+                obj.GetComponentInChildren<RedChairQuest>() != null ||
+                obj.GetComponentInParent<RedChairQuest>() != null ||
+                obj.GetComponent<REDCHAIR>() != null ||
+                obj.GetComponentInChildren<REDCHAIR>() != null ||
+                obj.GetComponentInParent<REDCHAIR>() != null);
     }
 
     private void SetTaskComplete(int taskIndex)

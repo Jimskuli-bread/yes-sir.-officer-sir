@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(PlayerPickup))]
 public class FPSMovement : MonoBehaviour
 {
     public float moveSpeed = 12.0f;
-    public float jumpHeight = 1.25f;
     public float groundDistance = 0.3f;
     public LayerMask groundLayer;
 
@@ -19,8 +19,12 @@ public class FPSMovement : MonoBehaviour
 
     private void Start()
     {
+        if (GetComponent<PlayerPickup>() == null)
+            gameObject.AddComponent<PlayerPickup>();
+
         characterController = GetComponent<CharacterController>();
-        cameraTransform = Camera.main.transform;
+        cameraTransform = Camera.main != null ? Camera.main.transform : transform;
+        PlayerPickup.EnsureAttached(gameObject, cameraTransform);
 
         if (groundCheck == null)
         {
@@ -47,12 +51,13 @@ public class FPSMovement : MonoBehaviour
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
 
-        Vector3 forwardDirection = cameraTransform.forward;
-        Vector3 rightDirection = cameraTransform.right;
-
-        forwardDirection.y = 0;
-        rightDirection.y = 0;
-
+        Transform movementFrame = cameraTransform != null && cameraTransform.parent != null
+            ? cameraTransform.parent
+            : transform;
+        Vector3 forwardDirection = movementFrame.forward;
+        Vector3 rightDirection = movementFrame.right;
+        forwardDirection.y = 0f;
+        rightDirection.y = 0f;
         forwardDirection.Normalize();
         rightDirection.Normalize();
 
@@ -61,10 +66,6 @@ public class FPSMovement : MonoBehaviour
 
         characterController.Move(movement);
 
-        if (Input.GetButtonDown("Jump") && isGrounded)
-        {
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        }
 
         HandleGravity();
 
@@ -73,7 +74,7 @@ public class FPSMovement : MonoBehaviour
 
     private void HandleGravity()
     {
-        // Normal gravity only — flight script disables this entire component
+        // Normal gravity only ï¿½ flight script disables this entire component
         velocity.y += gravity * Time.deltaTime;
     }
 }

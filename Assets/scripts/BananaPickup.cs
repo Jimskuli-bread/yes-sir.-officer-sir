@@ -1,14 +1,34 @@
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class BananaPickup : MonoBehaviour
 {
     public static bool HasBanana { get; private set; }
     public static BananaPickup FirstBanana { get; private set; }
     public static event Action OnBananaPickedUp;
+    public bool IsDetectorTarget { get; private set; }
+    public bool IsDetectorTargetRevealed { get; private set; }
+    private bool returningToOffice;
 
     [Header("Pickup Settings")]
     public string pickupMessage = "You picked up the banana.";
+
+    public void MarkAsDetectorTarget()
+    {
+        IsDetectorTarget = true;
+    }
+
+    public void RevealDetectorTarget()
+    {
+        IsDetectorTargetRevealed = true;
+    }
+
+    private void Awake()
+    {
+        if (GetComponent<InspectaBanana>() == null)
+            gameObject.AddComponent<InspectaBanana>();
+    }
 
     public static bool SpawnIntoHand(GameObject prefab, PlayerPickup playerPickup)
     {
@@ -18,8 +38,7 @@ public class BananaPickup : MonoBehaviour
         if (playerPickup.HeldObject != null && playerPickup.HeldObject.GetComponent<BananaPickup>() != null)
         {
             BananaPickup heldBanana = playerPickup.HeldObject.GetComponent<BananaPickup>();
-            HasBanana = true;
-            FirstBanana = heldBanana;
+            heldBanana.RegisterPickup();
             return true;
         }
 
@@ -36,16 +55,37 @@ public class BananaPickup : MonoBehaviour
             return false;
         }
 
-        HasBanana = true;
-        FirstBanana = banana;
-        OnBananaPickedUp?.Invoke();
         return true;
+    }
+
+    public void RegisterPickup()
+    {
+        if (IsDetectorTarget)
+        {
+            if (IsDetectorTargetRevealed)
+                TryCollectDetectorTarget();
+            return;
+        }
+
+        HasBanana = true;
+        if (FirstBanana == null)
+        {
+            FirstBanana = this;
+            Debug.Log(pickupMessage);
+            OnBananaPickedUp?.Invoke();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player"))
             return;
+
+        if (IsDetectorTarget)
+        {
+            TryCollectDetectorTarget();
+            return;
+        }
 
         if (HasBanana)
             return;
@@ -62,19 +102,27 @@ public class BananaPickup : MonoBehaviour
             }
         }
 
-        HasBanana = true;
-        if (FirstBanana == null)
-        {
-            FirstBanana = this;
-        }
-
-        Debug.Log(pickupMessage);
-        OnBananaPickedUp?.Invoke();
-
+        RegisterPickup();
         if (!keepInHand)
-        {
             Destroy(gameObject);
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (IsDetectorTarget && other.CompareTag("Player"))
+        {
+            TryCollectDetectorTarget();
         }
+    }
+
+    private void TryCollectDetectorTarget()
+    {
+        if (!IsDetectorTargetRevealed || returningToOffice)
+            return;
+
+        returningToOffice = true;
+        NPC.CompleteTaskInLoadedScenes(8);
+        SceneReturnTracker.LoadScene("Office");
     }
 
     public static void ResetBanana()
