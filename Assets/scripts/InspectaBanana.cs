@@ -4,10 +4,23 @@ using UnityEngine.InputSystem;
 public class InspectaBanana : MonoBehaviour
 {
     [SerializeField] private float rotationSensitivity = 0.2f;
+    [SerializeField] private AudioClip rotationSound;
 
     private CameraControl cameraControl;
+    private AudioSource rotationAudioSource;
     private bool wasCameraControlEnabled;
     private bool isRotating;
+    private bool playedRotationSound;
+
+    private void Awake()
+    {
+        rotationAudioSource = GetComponent<AudioSource>();
+        if (rotationAudioSource == null)
+            rotationAudioSource = gameObject.AddComponent<AudioSource>();
+
+        rotationAudioSource.playOnAwake = false;
+        rotationAudioSource.spatialBlend = 0f;
+    }
 
     private void Update()
     {
@@ -24,6 +37,19 @@ public class InspectaBanana : MonoBehaviour
             StartRotating(playerPickup);
 
         Vector2 mouseDelta = ReadMouseDelta();
+        if (mouseDelta.sqrMagnitude > 0f)
+        {
+            NPC.CompleteSeventhTaskWithBanana();
+
+            if (!playedRotationSound)
+            {
+                if (rotationSound != null)
+                    rotationAudioSource.PlayOneShot(rotationSound);
+
+                playedRotationSound = true;
+            }
+        }
+
         transform.Rotate(Vector3.up, mouseDelta.x * rotationSensitivity, Space.Self);
         transform.Rotate(Vector3.right, -mouseDelta.y * rotationSensitivity, Space.Self);
     }
@@ -66,6 +92,7 @@ public class InspectaBanana : MonoBehaviour
             return;
 
         isRotating = false;
+        playedRotationSound = false;
         if (cameraControl != null)
             cameraControl.enabled = wasCameraControlEnabled;
 

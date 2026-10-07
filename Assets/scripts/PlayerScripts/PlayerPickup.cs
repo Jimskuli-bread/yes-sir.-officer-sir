@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class PlayerPickup : MonoBehaviour
 {
@@ -15,11 +16,14 @@ public class PlayerPickup : MonoBehaviour
 
     [Header("Throw Settings")]
     public KeyCode throwKey = KeyCode.F;
-    public float throwForce = 10f;
+    public float throwForce = 1.2f;
 
     private GameObject heldObject;
+    private Collider[] playerColliders;
+    private Collider[] heldObjectColliders;
     private int pickableLayer;
     private static PlayerPickup persistentPlayer;
+    private AudioListener playerAudioListener;
 
     public GameObject HeldObject => heldObject;
 
@@ -35,10 +39,14 @@ public class PlayerPickup : MonoBehaviour
         if (pickup.holdPoint == null)
         {
             Transform parent = viewTransform != null ? viewTransform : player.transform;
-            GameObject holdPointObject = new GameObject("HoldPoint");
-            holdPointObject.transform.SetParent(parent, false);
-            holdPointObject.transform.localPosition = new Vector3(0.35f, -0.25f, 0.7f);
-            pickup.holdPoint = holdPointObject.transform;
+            pickup.holdPoint = parent.Find("HoldPoint");
+            if (pickup.holdPoint == null)
+            {
+                GameObject holdPointObject = new GameObject("HoldPoint");
+                holdPointObject.transform.SetParent(parent, false);
+                holdPointObject.transform.localPosition = new Vector3(0.2f, -0.15f, 1.2f);
+                pickup.holdPoint = holdPointObject.transform;
+            }
         }
 
         return pickup;
@@ -62,6 +70,38 @@ public class PlayerPickup : MonoBehaviour
         {
             aimCamera = Camera.main.transform;
         }
+
+        playerAudioListener = GetComponentInChildren<AudioListener>(true);
+        EnsureSingleAudioListener();
+    }
+
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        EnsureSingleAudioListener();
+    }
+
+    private void EnsureSingleAudioListener()
+    {
+        if (playerAudioListener == null)
+            return;
+
+        playerAudioListener.enabled = true;
+        AudioListener[] listeners = FindObjectsByType<AudioListener>(FindObjectsSortMode.None);
+        foreach (AudioListener listener in listeners)
+        {
+            if (listener != playerAudioListener)
+                listener.enabled = false;
+        }
     }
 
     private void Update()
@@ -81,6 +121,18 @@ public class PlayerPickup : MonoBehaviour
         {
             ThrowHeldObject();
         }
+    }
+
+    private void LateUpdate()
+    {
+        if (heldObject == null || holdPoint == null)
+            return;
+
+        Transform heldTransform = heldObject.transform;
+        if (heldTransform.parent != holdPoint)
+            heldTransform.SetParent(holdPoint, false);
+
+        heldTransform.localPosition = Vector3.zero;
     }
 
     private bool WasPickupPressed()
@@ -169,6 +221,9 @@ public class PlayerPickup : MonoBehaviour
     private void PickupObject(GameObject obj)
     {
         heldObject = obj;
+        playerColliders = GetComponentsInChildren<Collider>(true);
+        heldObjectColliders = obj.GetComponentsInChildren<Collider>(true);
+        SetHeldObjectCollisionIgnored(true);
 
         Rigidbody rb = obj.GetComponent<Rigidbody>();
         if (rb != null)
@@ -225,10 +280,16 @@ public class PlayerPickup : MonoBehaviour
         if (heldObject == null) return;
 
         heldObject.transform.SetParent(null, true);
+        SetHeldObjectCollisionIgnored(false);
 
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
         if (rb != null)
+        {
             rb.isKinematic = false;
+            Rigidbody playerRigidbody = GetComponent<Rigidbody>();
+            if (playerRigidbody != null)
+                rb.linearVelocity = playerRigidbody.linearVelocity;
+        }
 
         heldObject = null;
     }
@@ -253,11 +314,13 @@ public class PlayerPickup : MonoBehaviour
         }
 
         heldObject.transform.SetParent(null, true);
+        SetHeldObjectCollisionIgnored(false);
 
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.linearVelocity = Vector3.zero;
+            Rigidbody playerRigidbody = GetComponent<Rigidbody>();
+            rb.linearVelocity = playerRigidbody != null ? playerRigidbody.linearVelocity : Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             rb.isKinematic = false;
 
@@ -270,5 +333,29 @@ public class PlayerPickup : MonoBehaviour
         }
 
         heldObject = null;
+    }
+
+    private void SetHeldObjectCollisionIgnored(bool ignore)
+    {
+        if (playerColliders == null || heldObjectColliders == null)
+            return;
+
+        foreach (Collider playerCollider in playerColliders)
+        {
+            if (playerCollider == null)
+                continue;
+
+            foreach (Collider heldCollider in heldObjectColliders)
+            {
+                if (heldCollider != null)
+                    Physics.IgnoreCollision(playerCollider, heldCollider, ignore);
+            }
+        }
+
+        if (!ignore)
+        {
+            playerColliders = null;
+            heldObjectColliders = null;
+        }
     }
 }

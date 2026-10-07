@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5568327260793436380}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: GroundCheck
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -63,8 +63,40 @@ Transform:
   m_LocalPosition: {x: 0, y: 0.545, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 6767421835928841002}
   m_Father: {fileID: 744691924575730070}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6767421835928841001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6767421835928841002}
+  m_Layer: 0
+  m_Name: HoldPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6767421835928841002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6767421835928841001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.2, y: -0.15, z: 1.2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4069890969715212253}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &8377772057198246979
 Camera:
@@ -198,6 +230,7 @@ GameObject:
   - component: {fileID: 6292024805577893241}
   - component: {fileID: 3727703949089604198}
   - component: {fileID: 603442207207581282}
+  - component: {fileID: 7425681937046251801}
   m_Layer: 0
   m_Name: player
   m_TagString: Untagged
@@ -310,7 +343,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8514406918151106316}
   serializedVersion: 5
-  m_Mass: 1
+  m_Mass: 70
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -326,9 +359,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &603442207207581282
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -343,16 +376,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   walkSpeed: 6
   sprintSpeed: 10
-  jumpForce: 5
   maxStamina: 5
   staminaDrainRate: 1
   staminaRegenRate: 0.5
   groundCheck: {fileID: 5568327260793436380}
-  groundDistance: 0.2
+  groundCheckRadius: 0.2
+  jumpHeight: 1.25
   groundMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 9
   cameraTransform: {fileID: 4069890969715212253}
   moveAction: {fileID: 0}
   jumpAction: {fileID: 0}
   sprintAction: {fileID: 0}
+--- !u!114 &7425681937046251801
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8514406918151106316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b60ad2abad0c83646a363d1742a2361f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerPickup
+  pickupKey: 101
+  pickupRange: 3
+  holdPoint: {fileID: 6767421835928841002}
+  aimCamera: {fileID: 4069890969715212253}
+  throwKey: 102
+  throwForce: 1.2

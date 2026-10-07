@@ -100,6 +100,12 @@ PrefabInstance:
       addedObject: {fileID: 1377582193239287694}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f27fafcdd8bc5814cac3a95b62637ffc, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 7801342908553664271}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f27fafcdd8bc5814cac3a95b62637ffc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7254989711263481110}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f27fafcdd8bc5814cac3a95b62637ffc, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 5240629240546695727}
   m_SourcePrefab: {fileID: 100100000, guid: f27fafcdd8bc5814cac3a95b62637ffc, type: 3}
 --- !u!1 &859695805543524672 stripped
@@ -120,6 +126,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BananaPickup
   pickupMessage: You picked up the banana.
+--- !u!114 &7254989711263481110
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 859695805543524672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6a0111a91f549d48b3a3eceb4d6e907, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InspectaBanana
+  rotationSensitivity: 0.2
+  rotationSound: {fileID: 8300000, guid: 6016309bda6b0b049915416bfb1d63e6, type: 3}
 --- !u!135 &1377582193239287694
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -141,6 +161,29 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1.8409173
   m_Center: {x: -1.3409177, y: 0, z: 0}
+--- !u!136 &7801342908553664271
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 859695805543524672}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.15
+  m_Height: 1.8
+  m_Direction: 0
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &5240629240546695727
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -149,9 +192,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 859695805543524672}
   serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_Mass: 0.12
+  m_LinearDamping: 0.05
+  m_AngularDamping: 0.15
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -163,8 +206,8 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 0
+  m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2

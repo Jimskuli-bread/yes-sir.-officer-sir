@@ -7,48 +7,40 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement Settings")]
     public float walkSpeed = 6f;
     public float sprintSpeed = 10f;
-    public float jumpForce = 5f;
 
     [Header("Stamina Settings")]
     public float maxStamina = 5f;
     public float staminaDrainRate = 1f;
     public float staminaRegenRate = 0.5f;
 
-    [Header("Ground Detection")]
-    public Transform groundCheck;
-    public float groundDistance = 0.2f;
-    public LayerMask groundMask;
-
     [Header("References")]
     public Transform cameraTransform;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField, Min(0.01f)] private float groundCheckRadius = 0.2f;
+    [SerializeField, Min(0.1f)] private float jumpHeight = 1.25f;
+    [SerializeField] private LayerMask groundMask = (1 << 0) | (1 << 3);
 
 #if ENABLE_INPUT_SYSTEM
-    [SerializeField] private InputActionReference moveAction;
-    [SerializeField] private InputActionReference jumpAction;
     [SerializeField] private InputActionReference sprintAction;
 #endif
 
     private Rigidbody rb;
-    private bool isGrounded;
     private float currentStamina;
     private bool isSprinting;
+    private bool jumpRequested;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Prevent unwanted rotation
 
-        if (groundCheck == null)
-        {
-            groundCheck = transform.Find("GroundCheck");
-            if (groundCheck == null)
-                Debug.LogError("GroundCheck not found! Create a child or assign manually.");
-        }
-
         if (cameraTransform == null && Camera.main != null)
         {
             cameraTransform = Camera.main.transform;
         }
+
+        if (groundCheck == null)
+            groundCheck = transform.Find("GroundCheck");
 
         PlayerPickup.EnsureAttached(gameObject, cameraTransform);
         currentStamina = maxStamina;
@@ -57,8 +49,6 @@ public class PlayerMovement : MonoBehaviour
     private void OnEnable()
     {
 #if ENABLE_INPUT_SYSTEM
-        moveAction?.action.Enable();
-        jumpAction?.action.Enable();
         sprintAction?.action.Enable();
 #endif
     }
@@ -66,47 +56,57 @@ public class PlayerMovement : MonoBehaviour
     private void OnDisable()
     {
 #if ENABLE_INPUT_SYSTEM
-        moveAction?.action.Disable();
-        jumpAction?.action.Disable();
         sprintAction?.action.Disable();
 #endif
     }
 
-    void Update()
+    private void FixedUpdate()
     {
-        UpdateGroundStatus();
         HandleMovement();
-        HandleJump();
+
+        if (jumpRequested)
+        {
+            TryJump();
+            jumpRequested = false;
+        }
     }
 
-    void UpdateGroundStatus()
+    private void Update()
     {
-        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+            jumpRequested = true;
+#else
+        if (Input.GetKeyDown(KeyCode.Space))
+            jumpRequested = true;
+#endif
     }
 
     private Vector2 GetMovementInput()
     {
 #if ENABLE_INPUT_SYSTEM
-        if (moveAction != null)
-            return moveAction.action.ReadValue<Vector2>();
-
         if (Keyboard.current == null)
             return Vector2.zero;
 
         Vector2 input = Vector2.zero;
 
-        if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed)
+        if (Keyboard.current.wKey.isPressed)
             input.y += 1f;
-        if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed)
+        if (Keyboard.current.sKey.isPressed)
             input.y -= 1f;
-        if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed)
+        if (Keyboard.current.aKey.isPressed)
             input.x -= 1f;
-        if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed)
+        if (Keyboard.current.dKey.isPressed)
             input.x += 1f;
 
         return input;
 #else
-        return new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+        Vector2 input = Vector2.zero;
+        if (Input.GetKey(KeyCode.W)) input.y += 1f;
+        if (Input.GetKey(KeyCode.S)) input.y -= 1f;
+        if (Input.GetKey(KeyCode.A)) input.x -= 1f;
+        if (Input.GetKey(KeyCode.D)) input.x += 1f;
+        return input;
 #endif
     }
 
@@ -122,18 +122,6 @@ public class PlayerMovement : MonoBehaviour
 #endif
     }
 
-    private bool IsJumpPressed()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (jumpAction != null)
-            return jumpAction.action.WasPressedThisFrame();
-
-        return Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
-#else
-        return Input.GetButtonDown("Jump");
-#endif
-    }
-
     void HandleMovement()
     {
         Vector2 moveInput = GetMovementInput();
@@ -145,22 +133,23 @@ public class PlayerMovement : MonoBehaviour
         if (sprintInput && currentStamina > 0 && (x != 0 || z != 0))
         {
             isSprinting = true;
-            currentStamina -= staminaDrainRate * Time.deltaTime;
+            currentStamina -= staminaDrainRate * Time.fixedDeltaTime;
             currentStamina = Mathf.Clamp(currentStamina, 0, maxStamina);
         }
         else
         {
             isSprinting = false;
-            currentStamina += staminaRegenRate * Time.deltaTime;
+            currentStamina += staminaRegenRate * Time.fixedDeltaTime;
             currentStamina = Mathf.Clamp(currentStamina, 0, maxStamina);
         }
 
         float speed = isSprinting ? sprintSpeed : walkSpeed;
 
-        // Movement relative to camera's horizontal direction
-        Vector3 forward = cameraTransform.forward;
-        Vector3 right = cameraTransform.right;
-
+        Transform movementFrame = cameraTransform != null && cameraTransform.parent != null
+            ? cameraTransform.parent
+            : transform;
+        Vector3 forward = movementFrame.forward;
+        Vector3 right = movementFrame.right;
         forward.y = 0f;
         right.y = 0f;
         forward.Normalize();
@@ -170,24 +159,40 @@ public class PlayerMovement : MonoBehaviour
         if (direction.magnitude > 1f)
             direction.Normalize();
 
-        Vector3 move = direction * speed * Time.deltaTime;
-        rb.MovePosition(rb.position + move);
+        Vector3 velocity = rb.linearVelocity;
+        velocity.x = direction.x * speed;
+        velocity.z = direction.z * speed;
+        rb.linearVelocity = velocity;
     }
 
-    void HandleJump()
+    private void TryJump()
     {
-        if (IsJumpPressed() && isGrounded)
+        if (groundCheck == null)
+            return;
+
+        Collider[] overlaps = Physics.OverlapSphere(
+            groundCheck.position,
+            groundCheckRadius,
+            groundMask,
+            QueryTriggerInteraction.Ignore);
+        bool isGrounded = false;
+        foreach (Collider overlap in overlaps)
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            if (overlap.attachedRigidbody == rb)
+                continue;
+
+            isGrounded = true;
+            break;
         }
+
+        if (!isGrounded)
+        {
+            return;
+        }
+
+        Vector3 velocity = rb.linearVelocity;
+        velocity.y = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
+        rb.linearVelocity = velocity;
     }
 
-    void OnDrawGizmosSelected()
-    {
-        if (groundCheck != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(groundCheck.position, groundDistance);
-        }
-    }
 }
