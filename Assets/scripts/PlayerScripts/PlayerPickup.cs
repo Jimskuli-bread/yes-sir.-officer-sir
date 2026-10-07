@@ -37,23 +37,87 @@ public class PlayerPickup : MonoBehaviour
             Debug.LogError("Create a layer named 'Pickable' and assign it to objects the player can pick up.");
         }
 
-        if (aimCamera == null && Camera.main != null)
+        if (holdPoint == null)
         {
+            Transform cameraTransform = GetComponentInChildren<Camera>()?.transform;
+            Transform holdParent = cameraTransform != null ? cameraTransform : transform;
+            GameObject holdPointObject = new GameObject("HoldPoint");
+            holdPointObject.transform.SetParent(holdParent, false);
+            holdPointObject.transform.localPosition = cameraTransform != null
+                ? new Vector3(0.35f, -0.25f, 1f)
+                : new Vector3(0f, 1.4f, 1f);
+            holdPoint = holdPointObject.transform;
+        }
+
+        if (aimCamera == null && Camera.main != null)
             aimCamera = Camera.main.transform;
+
+        EnsureChairComponents();
+    }
+
+    private void EnsureChairComponents()
+    {
+        Transform[] sceneObjects = FindObjectsByType<Transform>(FindObjectsSortMode.None);
+        foreach (Transform candidate in sceneObjects)
+        {
+            if (candidate.IsChildOf(transform) ||
+                candidate.name.IndexOf("chair", System.StringComparison.OrdinalIgnoreCase) < 0 ||
+                candidate.GetComponentInParent<REDCHAIR>() != null)
+            {
+                continue;
+            }
+
+            Transform chairRoot = candidate;
+            while (chairRoot.parent != null &&
+                   chairRoot.parent.name.IndexOf("chair", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                chairRoot = chairRoot.parent;
+            }
+
+            if (chairRoot.GetComponentInChildren<REDCHAIR>() == null)
+                chairRoot.gameObject.AddComponent<REDCHAIR>();
         }
     }
 
     private void Update()
     {
+        REDCHAIR nearbyChair = FindNearbyChair();
+        if (nearbyChair != null)
+            nearbyChair.UpdatePlayerProximity(transform, IsHoldingChair(nearbyChair));
+
+        if (WasApologyPressed() && nearbyChair != null && nearbyChair.HasBeenThrown)
+            nearbyChair.Apologize(transform);
+
         if (WasPickupPressed())
         {
-            if (heldObject == null)
-                TryPickup();
-            else
+            if (heldObject != null)
             {
-                NPC.TryDeliverRedChair(heldObject);
-                DropObject();
+                REDCHAIR heldChair = heldObject.GetComponent<REDCHAIR>() ??
+                                     heldObject.GetComponentInChildren<REDCHAIR>() ??
+                                     heldObject.GetComponentInParent<REDCHAIR>();
+                if (heldChair != null)
+                    ThrowHeldObject();
+                else
+                {
+                    NPC.TryDeliverRedChair(heldObject);
+                    DropObject();
+                }
             }
+            else if (nearbyChair != null)
+            {
+                if (nearbyChair.CanBePickedUp)
+                {
+                    bool completedChairTask = nearbyChair.HasCompletedApologies;
+                    string nextSceneName = nearbyChair.nextSceneName;
+                    PickupObject(nearbyChair.gameObject);
+                    if (completedChairTask)
+                        SceneReturnTracker.LoadScene(nextSceneName);
+                }
+                else
+                    nearbyChair.RefusePickup(transform);
+            }
+            else
+                TryPickup();
         }
 
         if (heldObject != null && WasThrowPressed())
@@ -86,9 +150,6 @@ public class PlayerPickup : MonoBehaviour
     private bool WasThrowPressed()
     {
 #if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current == null)
-            return false;
-
         Key key = throwKey switch
         {
             KeyCode.E => Key.E,
@@ -98,11 +159,21 @@ public class PlayerPickup : MonoBehaviour
             _ => Key.F
         };
 
-        return Keyboard.current[key].wasPressedThisFrame;
+        return (Keyboard.current != null && Keyboard.current[key].wasPressedThisFrame) ||
+               (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame);
 #else
-        return Input.GetKeyDown(throwKey);
+        return Input.GetKeyDown(throwKey) || Input.GetMouseButtonDown(0);
 #endif
     }
+
+        private bool WasApologyPressed()
+        {
+    #if ENABLE_INPUT_SYSTEM
+        return Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame;
+    #else
+        return Input.GetKeyDown(KeyCode.Q);
+    #endif
+        }
 
     private void TryPickup()
     {
@@ -137,9 +208,46 @@ public class PlayerPickup : MonoBehaviour
         }
     }
 
+    private REDCHAIR FindNearbyChair()
+    {
+        REDCHAIR[] chairs = FindObjectsByType<REDCHAIR>(FindObjectsSortMode.None);
+        REDCHAIR closestChair = null;
+        float closestDistance = float.MaxValue;
+
+        foreach (REDCHAIR chair in chairs)
+        {
+            float distance = (chair.transform.position - transform.position).sqrMagnitude;
+            if (distance <= chair.interactionRange * chair.interactionRange && distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestChair = chair;
+            }
+        }
+
+        return closestChair;
+    }
+
+    private bool IsHoldingChair(REDCHAIR chair)
+    {
+        if (heldObject == null)
+            return false;
+
+        Transform heldTransform = heldObject.transform;
+        Transform chairTransform = chair.transform;
+        return heldTransform == chairTransform ||
+               heldTransform.IsChildOf(chairTransform) ||
+               chairTransform.IsChildOf(heldTransform);
+    }
+
     private void PickupObject(GameObject obj, Transform gripPoint = null)
     {
         heldObject = obj;
+
+        REDCHAIR redChair = obj.GetComponent<REDCHAIR>() ??
+                            obj.GetComponentInChildren<REDCHAIR>() ??
+                            obj.GetComponentInParent<REDCHAIR>();
+        if (redChair != null)
+            redChair.MarkPickedUp(transform);
 
         Vector3 gripLocalPosition = Vector3.zero;
         Quaternion gripLocalRotation = Quaternion.identity;
@@ -222,10 +330,19 @@ public class PlayerPickup : MonoBehaviour
         if (heldObject == null || holdPoint == null)
             return;
 
-        RedChairQuest redChair = heldObject.GetComponent<RedChairQuest>();
+        RedChairQuest legacyChair = heldObject.GetComponent<RedChairQuest>();
+        if (legacyChair != null)
+            legacyChair.MarkThrown();
+
+        REDCHAIR redChair = heldObject.GetComponent<REDCHAIR>() ??
+                            heldObject.GetComponentInChildren<REDCHAIR>() ??
+                            heldObject.GetComponentInParent<REDCHAIR>();
+
+        float appliedThrowForce = throwForce;
         if (redChair != null)
         {
-            redChair.MarkThrown();
+            redChair.MarkThrown(transform);
+            appliedThrowForce = redChair.GetThrowForce();
         }
 
         heldObject.transform.SetParent(null, true);
@@ -242,7 +359,7 @@ public class PlayerPickup : MonoBehaviour
                 ? playerMovement.cameraTransform
                 : aimCamera != null ? aimCamera : Camera.main != null ? Camera.main.transform : holdPoint;
 
-            rb.AddForce(directionSource.forward.normalized * throwForce, ForceMode.Impulse);
+            rb.AddForce(directionSource.forward.normalized * appliedThrowForce, ForceMode.Impulse);
         }
 
         heldObject = null;

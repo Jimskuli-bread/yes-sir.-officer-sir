@@ -1,13 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Rigidbody), typeof(PlayerPickup))]
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float walkSpeed = 6f;
     public float sprintSpeed = 10f;
-    public float jumpForce = 5f;
 
     [Header("Stamina Settings")]
     public float maxStamina = 5f;
@@ -24,7 +23,6 @@ public class PlayerMovement : MonoBehaviour
 
 #if ENABLE_INPUT_SYSTEM
     [SerializeField] private InputActionReference moveAction;
-    [SerializeField] private InputActionReference jumpAction;
     [SerializeField] private InputActionReference sprintAction;
 #endif
 
@@ -35,6 +33,9 @@ public class PlayerMovement : MonoBehaviour
 
     void Awake()
     {
+        if (GetComponent<PlayerPickup>() == null)
+            gameObject.AddComponent<PlayerPickup>();
+
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true; // Prevent unwanted rotation
 
@@ -57,7 +58,6 @@ public class PlayerMovement : MonoBehaviour
     {
 #if ENABLE_INPUT_SYSTEM
         moveAction?.action.Enable();
-        jumpAction?.action.Enable();
         sprintAction?.action.Enable();
 #endif
     }
@@ -66,7 +66,6 @@ public class PlayerMovement : MonoBehaviour
     {
 #if ENABLE_INPUT_SYSTEM
         moveAction?.action.Disable();
-        jumpAction?.action.Disable();
         sprintAction?.action.Disable();
 #endif
     }
@@ -75,7 +74,31 @@ public class PlayerMovement : MonoBehaviour
     {
         UpdateGroundStatus();
         HandleMovement();
-        HandleJump();
+    }
+
+    private void FixedUpdate()
+    {
+        StopUpwardMotion();
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        StopUpwardMotion();
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        StopUpwardMotion();
+    }
+
+    private void StopUpwardMotion()
+    {
+        Vector3 velocity = rb.linearVelocity;
+        if (velocity.y > 0f)
+        {
+            velocity.y = 0f;
+            rb.linearVelocity = velocity;
+        }
     }
 
     void UpdateGroundStatus()
@@ -121,18 +144,6 @@ public class PlayerMovement : MonoBehaviour
 #endif
     }
 
-    private bool IsJumpPressed()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (jumpAction != null)
-            return jumpAction.action.WasPressedThisFrame();
-
-        return Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
-#else
-        return Input.GetButtonDown("Jump");
-#endif
-    }
-
     void HandleMovement()
     {
         Vector2 moveInput = GetMovementInput();
@@ -171,14 +182,6 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 move = direction * speed * Time.deltaTime;
         rb.MovePosition(rb.position + move);
-    }
-
-    void HandleJump()
-    {
-        if (IsJumpPressed() && isGrounded)
-        {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        }
     }
 
     void OnDrawGizmosSelected()
