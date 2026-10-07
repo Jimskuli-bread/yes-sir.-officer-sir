@@ -157,7 +157,7 @@ public class PlayerPickup : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        obj.transform.SetParent(holdPoint, false);
+            obj.transform.SetParent(holdPoint, true);
         obj.transform.localRotation = Quaternion.Inverse(gripLocalRotation);
         obj.transform.localPosition = -(obj.transform.localRotation *
             Vector3.Scale(gripLocalPosition, obj.transform.localScale));

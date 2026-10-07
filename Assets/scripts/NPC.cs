@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 
 public class NPC : MonoBehaviour
 {
+    public GameObject banana;
     private const string SecondTaskCompleteKey = "NPC.SecondTaskComplete";
     private const string ThirdTaskCompleteKey = "NPC.ThirdTaskComplete";
     private const string SeventhTaskCompleteKey = "NPC.SeventhTaskComplete";
@@ -74,6 +75,11 @@ public class NPC : MonoBehaviour
         }
 
         ApplyTestCompletionFlags();
+
+        if (banana != null && tasks.Length > 1 && tasks[1].isComplete)
+        {
+            banana.SetActive(false);
+        }
 
         if (currentTaskIndex == 6 && !tasks[6].isComplete)
         {
@@ -246,6 +252,10 @@ public class NPC : MonoBehaviour
         seventhBananaSpawned = false;
         seventhDialogueStep = 0;
         currentDialogue = tasks[0].story;
+        if (banana != null)
+        {
+            banana.SetActive(true);
+        }
 
         PlayerPickup[] pickups = FindObjectsByType<PlayerPickup>(FindObjectsSortMode.None);
         foreach (PlayerPickup pickup in pickups)

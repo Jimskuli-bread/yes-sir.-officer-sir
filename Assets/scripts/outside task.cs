@@ -60,14 +60,7 @@ public static class SceneReturnTracker
 
     public static void ReturnToPreviousScene()
     {
-        string previousScene = PlayerPrefs.GetString(PreviousSceneKey);
-        if (string.IsNullOrEmpty(previousScene))
-        {
-            Debug.LogWarning("No previous scene was recorded; cannot return.");
-            return;
-        }
-
         PlayerPrefs.DeleteKey(PreviousSceneKey);
-        SceneManager.LoadScene(previousScene);
+        SceneManager.LoadScene("Office");
     }
 }

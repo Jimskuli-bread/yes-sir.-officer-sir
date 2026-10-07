@@ -236,10 +236,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83cedb42d072a204181a3196fd094c8d, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::BananaDetector
-  detectionRadius: 4
+  detectionRadius: 12
   signalRadius: 12
-  buriedDepth: 2.5
-  riseSpeed: 1.5
+  targetBanana: {fileID: 0}
+  signalClip: {fileID: 0}
 --- !u!135 &6020721507095368192
 SphereCollider:
   m_ObjectHideFlags: 0
