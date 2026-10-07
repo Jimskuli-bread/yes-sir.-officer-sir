@@ -13,15 +13,22 @@ public class NPC : MonoBehaviour
     [System.Serializable]
     public class TaskStep
     {
+        [TextArea(2, 4)]
         public string story;
+        [TextArea(2, 4)]
         public string objective;
+        [TextArea(2, 4)]
         public string completionText;
+        [HideInInspector]
         public bool isComplete;
+        [HideInInspector]
         public bool storyShown;
+        [HideInInspector]
         public bool objectiveShown;
     }
 
     [Header("Quest Settings")]
+    [Tooltip("Edit task dialogue and objectives here. The built-in gameplay events use the default task slots in order.")]
     public TaskStep[] tasks = new TaskStep[10];
     public float interactionRange = 3f;
     public KeyCode interactKey = KeyCode.E;
@@ -638,11 +645,20 @@ public class NPC : MonoBehaviour
         for (int i = 0; i < tasks.Length; i++)
         {
             if (tasks[i] == null)
-                tasks[i] = new TaskStep();
+                tasks[i] = new TaskStep
+                {
+                    story = defaultStories[i],
+                    objective = defaultObjectives[i],
+                    completionText = defaultCompletion[i]
+                };
 
-            tasks[i].story = defaultStories[i];
-            tasks[i].objective = defaultObjectives[i];
-            tasks[i].completionText = defaultCompletion[i];
+            if (tasks[i].story == null)
+                tasks[i].story = defaultStories[i];
+            if (tasks[i].objective == null)
+                tasks[i].objective = defaultObjectives[i];
+            if (tasks[i].completionText == null)
+                tasks[i].completionText = defaultCompletion[i];
+
             tasks[i].storyShown = false;
             tasks[i].objectiveShown = false;
         }
@@ -650,11 +666,6 @@ public class NPC : MonoBehaviour
 
     private void OnGUI()
     {
-        if (GUI.Button(new Rect(Screen.width - 180f, 12f, 168f, 32f), "Reset Quest (Å)"))
-        {
-            ResetQuestProgress();
-        }
-
         if (player == null || !playerNearby)
             return;
 
