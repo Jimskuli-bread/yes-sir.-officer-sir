@@ -47,6 +47,7 @@ public class TouchGrass : MonoBehaviour
             taskCompleted = true;
             NPC.CompleteSecondTask();
             Debug.Log("Grass task completed.", this);
+            SceneReturnTracker.ReturnToPreviousScene();
         }
     }
 
