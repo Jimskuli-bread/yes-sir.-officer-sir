@@ -367,6 +367,26 @@ public class NPC : MonoBehaviour
         return false;
     }
 
+    public static bool IsTaskActiveOrNoNpcLoaded(int taskIndex)
+    {
+        NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
+        if (loadedNpcs.Length == 0)
+        {
+            string completionKey = GetTaskCompleteKey(taskIndex);
+            return completionKey != null && PlayerPrefs.GetInt(completionKey, 0) == 0;
+        }
+
+        foreach (NPC npc in loadedNpcs)
+        {
+            if (npc.currentTaskIndex == taskIndex)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static void CompleteTaskAcrossScenes(int taskIndex)
     {
         string completionKey = GetTaskCompleteKey(taskIndex);
@@ -514,7 +534,7 @@ public class NPC : MonoBehaviour
             "You need help so pls go get help.",
             "You have spent too much time on your computer so go touch grass.",
             "Go find a banana using the other banana.",
-            "Your boss tells you to find Steve. When you speak to them again, tell them: 'Screw you, I'm quitting.'"
+            "Go get Steve."
         };
 
         string[] defaultObjectives =
@@ -528,7 +548,7 @@ public class NPC : MonoBehaviour
             "Objective: Ask the banana where your life choices went wrong.",
             "Objective: Go outside and touch grass.",
             "Objective: Use another banana and the banana detector to find the first banana.",
-            "Objective: Find Steve"
+            "Objective: Find Steve."
         };
 
         string[] defaultCompletion =
