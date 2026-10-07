@@ -170,6 +170,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: daca3a22deaa59a4f96ba155b8d9fea0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameMenu
+  clickSound: {fileID: 8300000, guid: e26057d18e6a56341ba97cf4eddd1849, type: 3}
 --- !u!1 &26103772
 GameObject:
   m_ObjectHideFlags: 0
