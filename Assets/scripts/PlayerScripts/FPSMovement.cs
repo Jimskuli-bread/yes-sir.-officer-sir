@@ -23,7 +23,8 @@ public class FPSMovement : MonoBehaviour
             gameObject.AddComponent<PlayerPickup>();
 
         characterController = GetComponent<CharacterController>();
-        cameraTransform = Camera.main.transform;
+        cameraTransform = Camera.main != null ? Camera.main.transform : transform;
+        PlayerPickup.EnsureAttached(gameObject, cameraTransform);
 
         if (groundCheck == null)
         {
@@ -50,12 +51,13 @@ public class FPSMovement : MonoBehaviour
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
 
-        Vector3 forwardDirection = cameraTransform.forward;
-        Vector3 rightDirection = cameraTransform.right;
-
-        forwardDirection.y = 0;
-        rightDirection.y = 0;
-
+        Transform movementFrame = cameraTransform != null && cameraTransform.parent != null
+            ? cameraTransform.parent
+            : transform;
+        Vector3 forwardDirection = movementFrame.forward;
+        Vector3 rightDirection = movementFrame.right;
+        forwardDirection.y = 0f;
+        rightDirection.y = 0f;
         forwardDirection.Normalize();
         rightDirection.Normalize();
 
