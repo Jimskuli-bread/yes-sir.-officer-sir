@@ -191,6 +191,7 @@ MonoBehaviour:
   openDoorClip: {fileID: 0}
   closeDoorClip: {fileID: 0}
   useHingeJoint: 1
+  interactionDistance: 2.5
   forceReliableSwing: 1
   DoorOpenAngle: 90
   DoorCloseAngle: 0
