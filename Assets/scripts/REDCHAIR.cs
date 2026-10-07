@@ -12,7 +12,7 @@ public class REDCHAIR : MonoBehaviour
     public string nextSceneName = "JAM";
     public bool HasBeenThrown => wasThrown;
     public bool CanBePickedUp => !wasThrown || apologizedThisThrow;
-    public bool HasCompletedApologies => wasThrown && apologizedThisThrow && apologiesCompleted >= apologiesRequired;
+    public bool HasCompletedApologies => wasThrown && apologizedThisThrow && apologiesCompleted >= Mathf.Max(1, apologiesRequired);
 
     private Transform player;
     private bool wasThrown;
@@ -116,12 +116,14 @@ public class REDCHAIR : MonoBehaviour
 
         apologizedThisThrow = true;
         apologiesCompleted++;
-        string chairResponse = apologiesCompleted >= apologiesRequired
-            ? "Chair: Fine. That's enough. Pick me up and get moving."
-            : "Chair: Apology accepted. Pick me up and throw me again, you idiot.";
+        int requiredApologies = Mathf.Max(1, apologiesRequired);
+        bool finished = apologiesCompleted >= requiredApologies;
+        string chairResponse = finished
+            ? "Chair: Fine. That's enough. Pick me up with E to continue."
+            : "Chair: Apology accepted. Pick me up with E and throw me again.";
         ShowDialogue($"You: I'm sorry I threw you.\n{chairResponse}");
 
-        if (apologiesCompleted >= apologiesRequired)
+        if (finished)
             NPC.CompleteTaskInLoadedScenes(4);
     }
 
@@ -153,10 +155,10 @@ public class REDCHAIR : MonoBehaviour
             message = "Press E to pick up the chair";
         else if (!apologizedThisThrow)
             message = "Press Q to apologize to the chair";
-        else if (apologiesCompleted < apologiesRequired)
-            message = "Press E to pick up and throw again";
+        else if (apologiesCompleted < Mathf.Max(1, apologiesRequired))
+            message = "Apology accepted. Press E to pick up and throw again";
         else
-            message = "Press E to pick up the chair and continue";
+            message = "All apologies accepted. Press E to pick up and continue";
 
         float boxWidth = Mathf.Min(Screen.width - 32f, 760f);
         float boxHeight = showingDialogue ? 150f : 58f;
