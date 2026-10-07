@@ -321,7 +321,7 @@ public class NPC : MonoBehaviour
 
     public static bool TryDeliverRedChair(GameObject chair)
     {
-        if (chair == null || chair.GetComponent<RedChairQuest>() == null)
+        if (!HasRedChairComponent(chair))
             return false;
 
         NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
@@ -467,7 +467,18 @@ public class NPC : MonoBehaviour
     private bool IsHoldingRedChair()
     {
         GameObject heldObject = HeldObject;
-        return heldObject != null && heldObject.GetComponent<RedChairQuest>() != null;
+        return HasRedChairComponent(heldObject);
+    }
+
+    private static bool HasRedChairComponent(GameObject obj)
+    {
+        return obj != null &&
+               (obj.GetComponent<RedChairQuest>() != null ||
+                obj.GetComponentInChildren<RedChairQuest>() != null ||
+                obj.GetComponentInParent<RedChairQuest>() != null ||
+                obj.GetComponent<REDCHAIR>() != null ||
+                obj.GetComponentInChildren<REDCHAIR>() != null ||
+                obj.GetComponentInParent<REDCHAIR>() != null);
     }
 
     private void SetTaskComplete(int taskIndex)
