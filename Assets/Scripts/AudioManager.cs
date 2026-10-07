@@ -59,6 +59,14 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    public void PlaySound(AudioClip clip)
+    {
+        if (clip != null && soundSource != null)
+        {
+            soundSource.PlayOneShot(clip);
+        }
+    }
+
     public void PlayMusic(string musicName)
     {
         if (musicTracks == null || musicNames == null || musicName == null || musicSource == null)

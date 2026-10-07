@@ -33,8 +33,15 @@ public class GameMenu : MonoBehaviour
         }
 
         lastClickFrame = Time.frameCount;
-        Vector3 audioPosition = Camera.main != null ? Camera.main.transform.position : transform.position;
-        AudioSource.PlayClipAtPoint(clickSound, audioPosition);
+        if (AudioManager.instance != null)
+        {
+            AudioManager.instance.PlaySound(clickSound);
+        }
+        else
+        {
+            Vector3 audioPosition = Camera.main != null ? Camera.main.transform.position : transform.position;
+            AudioSource.PlayClipAtPoint(clickSound, audioPosition);
+        }
     }
 
     void QuitApplication()
