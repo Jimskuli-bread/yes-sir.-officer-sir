@@ -24,6 +24,12 @@ public class BananaPickup : MonoBehaviour
         IsDetectorTargetRevealed = true;
     }
 
+    private void Awake()
+    {
+        if (GetComponent<InspectaBanana>() == null)
+            gameObject.AddComponent<InspectaBanana>();
+    }
+
     public static bool SpawnIntoHand(GameObject prefab, PlayerPickup playerPickup)
     {
         if (prefab == null || playerPickup == null)
@@ -32,8 +38,7 @@ public class BananaPickup : MonoBehaviour
         if (playerPickup.HeldObject != null && playerPickup.HeldObject.GetComponent<BananaPickup>() != null)
         {
             BananaPickup heldBanana = playerPickup.HeldObject.GetComponent<BananaPickup>();
-            HasBanana = true;
-            FirstBanana = heldBanana;
+            heldBanana.RegisterPickup();
             return true;
         }
 
@@ -50,10 +55,25 @@ public class BananaPickup : MonoBehaviour
             return false;
         }
 
-        HasBanana = true;
-        FirstBanana = banana;
-        OnBananaPickedUp?.Invoke();
         return true;
+    }
+
+    public void RegisterPickup()
+    {
+        if (IsDetectorTarget)
+        {
+            if (IsDetectorTargetRevealed)
+                TryCollectDetectorTarget();
+            return;
+        }
+
+        HasBanana = true;
+        if (FirstBanana == null)
+        {
+            FirstBanana = this;
+            Debug.Log(pickupMessage);
+            OnBananaPickedUp?.Invoke();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -82,19 +102,9 @@ public class BananaPickup : MonoBehaviour
             }
         }
 
-        HasBanana = true;
-        if (FirstBanana == null)
-        {
-            FirstBanana = this;
-        }
-
-        Debug.Log(pickupMessage);
-        OnBananaPickedUp?.Invoke();
-
+        RegisterPickup();
         if (!keepInHand)
-        {
             Destroy(gameObject);
-        }
     }
 
     private void OnTriggerStay(Collider other)

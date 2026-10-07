@@ -356,10 +356,13 @@ public class NPC : MonoBehaviour
         NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
         foreach (NPC npc in loadedNpcs)
         {
-            if (npc.currentTaskIndex == 6)
-            {
+            if (npc.currentTaskIndex != 6)
+                continue;
+
+            if (!npc.tasks[6].isComplete)
                 npc.CompleteTask(6);
-            }
+
+            npc.AdvanceTask();
         }
     }
 

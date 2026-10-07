@@ -14,6 +14,8 @@ public class CameraControl : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;  // Lock and hide cursor
         Cursor.visible = false;
+        if (playerBody != null)
+            currentBodyRotationY = playerBody.eulerAngles.y;
     }
 
     void Update()
@@ -34,8 +36,10 @@ public class CameraControl : MonoBehaviour
         // Apply vertical rotation to the camera
         transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
-        // Horizontal rotation (rotate player body smoothly)
-        currentBodyRotationY += mouseX;
-        playerBody.rotation = Quaternion.Euler(0f, currentBodyRotationY, 0f);
+        if (playerBody != null && Mathf.Abs(mouseX) > 0.0001f)
+        {
+            currentBodyRotationY += mouseX;
+            playerBody.rotation = Quaternion.Euler(0f, currentBodyRotationY, 0f);
+        }
     }
 }
