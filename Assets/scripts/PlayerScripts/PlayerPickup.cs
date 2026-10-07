@@ -21,6 +21,8 @@ public class PlayerPickup : MonoBehaviour
     private GameObject heldObject;
     private Collider[] playerColliders;
     private Collider[] heldObjectColliders;
+    private Vector3 heldLocalPosition;
+    private Quaternion heldLocalRotation = Quaternion.identity;
     private int pickableLayer;
     private static PlayerPickup persistentPlayer;
     private AudioListener playerAudioListener;
@@ -208,9 +210,11 @@ public class PlayerPickup : MonoBehaviour
 
         Transform heldTransform = heldObject.transform;
         if (heldTransform.parent != holdPoint)
-            heldTransform.SetParent(holdPoint, false);
-
-        heldTransform.localPosition = Vector3.zero;
+        {
+            heldTransform.SetParent(holdPoint, true);
+            heldTransform.localPosition = heldLocalPosition;
+            heldTransform.localRotation = heldLocalRotation;
+        }
     }
 
     private bool WasPickupPressed()
@@ -263,6 +267,7 @@ public class PlayerPickup : MonoBehaviour
 
         Collider[] hits = Physics.OverlapSphere(transform.position, pickupRange, ~0, QueryTriggerInteraction.Collide);
         GameObject closestObject = null;
+        Transform closestGripPoint = null;
         float closestDistance = float.MaxValue;
 
         foreach (Collider hit in hits)
@@ -282,36 +287,58 @@ public class PlayerPickup : MonoBehaviour
             if (banana != null)
                 candidate = banana.gameObject;
 
+            Transform gripPoint = candidate.GetComponent<BananaDetector>() != null
+                ? hit.transform
+                : null;
             float distance = (hit.ClosestPoint(transform.position) - transform.position).sqrMagnitude;
             if (distance < closestDistance)
             {
                 closestDistance = distance;
                 closestObject = candidate;
+                closestGripPoint = gripPoint;
             }
         }
 
         if (closestObject != null)
-            PickupObject(closestObject);
+        {
+            bool keepPlayerAcrossScenes = closestObject.GetComponent<BananaPickup>() != null && NPC.IsTaskActive(0);
+            PickupObject(closestObject, closestGripPoint);
+            if (keepPlayerAcrossScenes)
+            {
+                persistentPlayer = this;
+                DontDestroyOnLoad(transform.root.gameObject);
+            }
+        }
     }
 
-    private void PickupObject(GameObject obj)
+    private void PickupObject(GameObject obj, Transform gripPoint = null)
     {
         heldObject = obj;
         playerColliders = GetComponentsInChildren<Collider>(true);
         heldObjectColliders = obj.GetComponentsInChildren<Collider>(true);
         SetHeldObjectCollisionIgnored(true);
 
+        Vector3 gripLocalPosition = Vector3.zero;
+        Quaternion gripLocalRotation = Quaternion.identity;
+        if (gripPoint != null)
+        {
+            gripLocalPosition = obj.transform.InverseTransformPoint(gripPoint.position);
+            gripLocalRotation = Quaternion.Inverse(obj.transform.rotation) * gripPoint.rotation;
+        }
+
         Rigidbody rb = obj.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.isKinematic = true;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
         }
 
-        obj.transform.SetParent(holdPoint, false);
-        obj.transform.localPosition = Vector3.zero;
-        obj.transform.localRotation = Quaternion.identity;
+        obj.transform.SetParent(holdPoint, true);
+        heldLocalRotation = Quaternion.Inverse(gripLocalRotation);
+        heldLocalPosition = -(heldLocalRotation * Vector3.Scale(gripLocalPosition, obj.transform.localScale));
+        obj.transform.localPosition = heldLocalPosition;
+        obj.transform.localRotation = heldLocalRotation;
 
         BananaPickup banana = obj.GetComponent<BananaPickup>();
         if (banana != null)

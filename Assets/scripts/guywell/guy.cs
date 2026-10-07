@@ -6,6 +6,12 @@ public class guy : MonoBehaviour
     [SerializeField] private Collider wellTrigger;
 
     private bool taskCompleted;
+    private Collider guyCollider;
+
+    private void Awake()
+    {
+        guyCollider = GetComponent<Collider>();
+    }
 
     private void Start()
     {
@@ -18,10 +24,37 @@ public class guy : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (taskCompleted || other != wellTrigger)
+        TryCompleteTask(other);
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        TryCompleteTask(other);
+    }
+
+    private void FixedUpdate()
+    {
+        if (!taskCompleted && guyCollider != null && wellTrigger != null &&
+            guyCollider.bounds.Intersects(wellTrigger.bounds))
+        {
+            CompleteTaskAtWell();
+        }
+    }
+
+    private void TryCompleteTask(Collider other)
+    {
+        if (taskCompleted || wellTrigger == null || other != wellTrigger)
         {
             return;
         }
+
+        CompleteTaskAtWell();
+    }
+
+    private void CompleteTaskAtWell()
+    {
+        if (taskCompleted)
+            return;
 
         taskCompleted = true;
         NPC.CompleteThirdTask();
