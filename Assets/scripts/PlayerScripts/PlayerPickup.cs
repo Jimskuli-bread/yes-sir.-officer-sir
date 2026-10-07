@@ -129,25 +129,38 @@ public class PlayerPickup : MonoBehaviour
         if (closestHit != null)
         {
             Rigidbody body = closestHit.attachedRigidbody;
-            PickupObject(body != null ? body.gameObject : closestHit.gameObject);
+            GameObject pickupObject = body != null ? body.gameObject : closestHit.gameObject;
+            Transform gripPoint = pickupObject.GetComponent<BananaDetector>() != null
+                ? closestHit.transform
+                : null;
+            PickupObject(pickupObject, gripPoint);
         }
     }
 
-    private void PickupObject(GameObject obj)
+    private void PickupObject(GameObject obj, Transform gripPoint = null)
     {
         heldObject = obj;
+
+        Vector3 gripLocalPosition = Vector3.zero;
+        Quaternion gripLocalRotation = Quaternion.identity;
+        if (gripPoint != null)
+        {
+            gripLocalPosition = obj.transform.InverseTransformPoint(gripPoint.position);
+            gripLocalRotation = Quaternion.Inverse(obj.transform.rotation) * gripPoint.rotation;
+        }
 
         Rigidbody rb = obj.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.isKinematic = true;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
         }
 
         obj.transform.SetParent(holdPoint, false);
-        obj.transform.localPosition = Vector3.zero;
-        obj.transform.localRotation = Quaternion.identity;
+        obj.transform.localRotation = Quaternion.Inverse(gripLocalRotation);
+        obj.transform.localPosition = -(obj.transform.localRotation *
+            Vector3.Scale(gripLocalPosition, obj.transform.localScale));
     }
 
     public bool TryPickupObject(GameObject obj, bool keepPlayerAcrossScenes = false)
