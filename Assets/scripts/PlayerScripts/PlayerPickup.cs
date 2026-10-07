@@ -212,9 +212,10 @@ public class PlayerPickup : MonoBehaviour
         if (heldTransform.parent != holdPoint)
         {
             heldTransform.SetParent(holdPoint, true);
-            heldTransform.localPosition = heldLocalPosition;
-            heldTransform.localRotation = heldLocalRotation;
         }
+
+        heldTransform.localPosition = heldLocalPosition;
+        heldTransform.localRotation = heldLocalRotation;
     }
 
     private bool WasPickupPressed()
@@ -313,6 +314,7 @@ public class PlayerPickup : MonoBehaviour
 
     private void PickupObject(GameObject obj, Transform gripPoint = null)
     {
+        bool isRedChair = GetRedChair(obj) != null;
         heldObject = obj;
         playerColliders = GetComponentsInChildren<Collider>(true);
         heldObjectColliders = obj.GetComponentsInChildren<Collider>(true);
@@ -337,6 +339,7 @@ public class PlayerPickup : MonoBehaviour
         obj.transform.SetParent(holdPoint, true);
         heldLocalRotation = Quaternion.Inverse(gripLocalRotation);
         heldLocalPosition = -(heldLocalRotation * Vector3.Scale(gripLocalPosition, obj.transform.localScale));
+
         obj.transform.localPosition = heldLocalPosition;
         obj.transform.localRotation = heldLocalRotation;
 

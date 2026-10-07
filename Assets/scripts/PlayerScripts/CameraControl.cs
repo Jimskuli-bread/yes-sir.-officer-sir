@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class CameraControl : MonoBehaviour
 {
@@ -9,17 +10,32 @@ public class CameraControl : MonoBehaviour
 
     private float xRotation = 0f;  // Vertical rotation
     private float currentBodyRotationY; // Current horizontal rotation of the player body
+    private bool wasCursorLocked = true;
 
     void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;  // Lock and hide cursor
-        Cursor.visible = false;
+        bool isMenuScene = SceneManager.GetActiveScene().name == "Menu";
+        Cursor.lockState = isMenuScene ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = isMenuScene;
+        wasCursorLocked = !isMenuScene;
         if (playerBody != null)
             currentBodyRotationY = playerBody.eulerAngles.y;
     }
 
     void Update()
     {
+        if (Cursor.lockState != CursorLockMode.Locked)
+        {
+            wasCursorLocked = false;
+            return;
+        }
+
+        if (!wasCursorLocked)
+        {
+            wasCursorLocked = true;
+            return;
+        }
+
 #if ENABLE_INPUT_SYSTEM
         Vector2 mouseDelta = Mouse.current != null ? Mouse.current.delta.ReadValue() : Vector2.zero;
         float mouseX = mouseDelta.x * mouseSensitivity * Time.deltaTime;
