@@ -37,6 +37,7 @@ public class QuestTaskTrigger : MonoBehaviour
         else
         {
             NPC.CompleteTaskInLoadedScenes(taskIndex);
+            SceneReturnTracker.ReturnToPreviousScene();
         }
     }
 }

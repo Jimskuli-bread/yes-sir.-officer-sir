@@ -9,7 +9,7 @@ public class REDCHAIR : MonoBehaviour
     public float initialThrowForce = 25f;
     public float repeatThrowForceIncrease = 15f;
     public int apologiesRequired = 3;
-    public string nextSceneName = "JAM";
+    public string nextSceneName = "Office";
     public bool HasBeenThrown => wasThrown;
     public bool CanBePickedUp => !wasThrown || apologizedThisThrow;
     public bool HasCompletedApologies => wasThrown && apologizedThisThrow && apologiesCompleted >= Mathf.Max(1, apologiesRequired);
