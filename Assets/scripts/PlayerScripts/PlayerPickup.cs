@@ -91,6 +91,39 @@ public class PlayerPickup : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         EnsureSingleAudioListener();
+
+        if (scene.name == "Office")
+        {
+            PlacePlayerOnOfficeGround();
+        }
+    }
+
+    private void PlacePlayerOnOfficeGround()
+    {
+        GameObject ground = GameObject.Find("Plane");
+        Collider groundCollider = ground != null ? ground.GetComponent<Collider>() : null;
+        if (groundCollider == null)
+            return;
+
+        Bounds groundBounds = groundCollider.bounds;
+        Vector3 spawnPosition = new Vector3(
+            groundBounds.center.x,
+            groundBounds.max.y + 1.05f,
+            groundBounds.center.z);
+
+        Rigidbody body = GetComponent<Rigidbody>();
+        if (body != null)
+        {
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            body.position = spawnPosition;
+        }
+        else
+        {
+            transform.position = spawnPosition;
+        }
+
+        Physics.SyncTransforms();
     }
 
     private void EnsureSingleAudioListener()

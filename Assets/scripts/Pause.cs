@@ -8,7 +8,6 @@ public class Pause : MonoBehaviour
     private GUIStyle panelStyle;
     private GUIStyle titleStyle;
     private GUIStyle buttonStyle;
-    private Sprite pauseBackgroundGrey;
     private Sprite pauseBackgroundColor;
     private static Pause instance;
 
@@ -99,6 +98,11 @@ public class Pause : MonoBehaviour
             return;
         }
 
+        Color previousGuiColor = GUI.color;
+        Color previousBackgroundColor = GUI.backgroundColor;
+        GUI.color = Color.white;
+        GUI.backgroundColor = new Color(0.22f, 0.025f, 0.07f, 0.98f);
+
         float panelWidth = Mathf.Min(760f, Screen.width - 32f);
         float panelHeight = Mathf.Min(460f, Screen.height - 32f);
         Rect panel = new Rect(
@@ -117,11 +121,9 @@ public class Pause : MonoBehaviour
         Rect resumeRect = new Rect(actionsX, buttonsY, actionsWidth, buttonHeight);
         Rect restartRect = new Rect(actionsX, buttonsY + buttonHeight + buttonSpacing, actionsWidth, buttonHeight);
         Rect menuRect = new Rect(actionsX, buttonsY + (buttonHeight + buttonSpacing) * 2f, actionsWidth, buttonHeight);
-        Sprite background = pauseBackgroundColor != null ? pauseBackgroundColor : pauseBackgroundGrey;
-
-        if (background != null)
+        if (pauseBackgroundColor != null)
         {
-            GUI.DrawTexture(panel, background.texture, ScaleMode.ScaleToFit, true);
+            GUI.DrawTexture(panel, pauseBackgroundColor.texture, ScaleMode.ScaleToFit, true);
         }
 
         GUI.Label(new Rect(actionsX, panel.y + 48f, actionsWidth, 54f), "PAUSED", titleStyle);
@@ -143,6 +145,8 @@ public class Pause : MonoBehaviour
             SceneManager.LoadScene("Menu");
         }
 
+        GUI.color = previousGuiColor;
+        GUI.backgroundColor = previousBackgroundColor;
     }
 
     private void OnDisable()
@@ -167,12 +171,11 @@ public class Pause : MonoBehaviour
             return;
         }
 
-        pauseBackgroundGrey = Resources.Load<Sprite>("Pause/PauseGreyLabel");
         pauseBackgroundColor = Resources.Load<Sprite>("Pause/PauseColorLabel");
 
         panelStyle = new GUIStyle(GUI.skin.box)
         {
-            normal = { background = MakeTexture(new Color(0.08f, 0.07f, 0.07f, 0.98f)) },
+            normal = { background = MakeTexture(new Color(0.22f, 0.025f, 0.07f, 0.98f)) },
             border = new RectOffset(0, 0, 0, 0)
         };
         titleStyle = new GUIStyle(GUI.skin.label)
@@ -182,6 +185,9 @@ public class Pause : MonoBehaviour
             fontStyle = FontStyle.Bold,
             normal = { textColor = new Color(0.91f, 0.76f, 0.43f) }
         };
+        Texture2D buttonTexture = MakeTexture(new Color(0.48f, 0.08f, 0.1f));
+        Texture2D highlightedButtonTexture = MakeTexture(new Color(0.83f, 0.68f, 0.39f));
+        Color highlightedTextColor = new Color(0.14f, 0.1f, 0.08f);
         buttonStyle = new GUIStyle(GUI.skin.button)
         {
             fontSize = 17,
@@ -189,18 +195,43 @@ public class Pause : MonoBehaviour
             alignment = TextAnchor.MiddleCenter,
             normal =
             {
-                background = MakeTexture(new Color(0.48f, 0.08f, 0.1f)),
+                background = buttonTexture,
                 textColor = Color.white
             },
             hover =
             {
-                background = MakeTexture(new Color(0.83f, 0.68f, 0.39f)),
-                textColor = new Color(0.14f, 0.1f, 0.08f)
+                background = highlightedButtonTexture,
+                textColor = highlightedTextColor
             },
             active =
             {
-                background = MakeTexture(new Color(0.83f, 0.68f, 0.39f)),
-                textColor = new Color(0.14f, 0.1f, 0.08f)
+                background = highlightedButtonTexture,
+                textColor = highlightedTextColor
+            },
+            focused =
+            {
+                background = highlightedButtonTexture,
+                textColor = highlightedTextColor
+            },
+            onNormal =
+            {
+                background = buttonTexture,
+                textColor = Color.white
+            },
+            onHover =
+            {
+                background = highlightedButtonTexture,
+                textColor = highlightedTextColor
+            },
+            onActive =
+            {
+                background = highlightedButtonTexture,
+                textColor = highlightedTextColor
+            },
+            onFocused =
+            {
+                background = highlightedButtonTexture,
+                textColor = highlightedTextColor
             }
         };
     }

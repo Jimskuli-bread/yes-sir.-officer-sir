@@ -123,7 +123,7 @@ public class NPC : MonoBehaviour
         {
             CompleteTask(9);
             currentDialogue = "Screw you, I'm quitting.";
-            SceneReturnTracker.LoadScene("Banana");
+            SceneReturnTracker.ReturnToPreviousScene();
             return;
         }
 
@@ -417,7 +417,6 @@ public class NPC : MonoBehaviour
             1 => "Park",
             2 => "guywell",
             4 => "Red Chair",
-            7 => "Touch Grass",
             8 => "Banana detector",
             _ => null
         };
@@ -570,7 +569,7 @@ public class NPC : MonoBehaviour
 
     private static bool IsRemovedTask(int taskIndex)
     {
-        return taskIndex == 3 || taskIndex == 5;
+        return taskIndex == 3 || taskIndex == 5 || taskIndex == 7;
     }
 
     private void ResetCurrentTaskFlags()
