@@ -18,7 +18,7 @@ public class GameMenu : MonoBehaviour
 
     void Start()
     {
-        Button[] buttons = FindObjectsOfType<Button>(true);
+        Button[] buttons = FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (Button button in buttons)
         {
             button.onClick.AddListener(PlayClickSound);
