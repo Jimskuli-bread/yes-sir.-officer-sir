@@ -5,7 +5,6 @@ public class Pause : MonoBehaviour
 {
     private bool isPaused;
     private bool cursorUnlockedForUi;
-    private GUIStyle panelStyle;
     private GUIStyle titleStyle;
     private GUIStyle buttonStyle;
     private Sprite pauseBackgroundColor;
@@ -104,7 +103,7 @@ public class Pause : MonoBehaviour
         Color previousGuiColor = GUI.color;
         Color previousBackgroundColor = GUI.backgroundColor;
         GUI.color = Color.white;
-        GUI.backgroundColor = new Color(0.22f, 0.025f, 0.07f, 0.98f);
+        GUI.backgroundColor = Color.white;
 
         float panelWidth = Mathf.Min(760f, Screen.width - 32f);
         float panelHeight = Mathf.Min(460f, Screen.height - 32f);
@@ -114,9 +113,11 @@ public class Pause : MonoBehaviour
             panelWidth,
             panelHeight);
 
-        GUI.Box(panel, GUIContent.none, panelStyle);
-        float actionsX = panel.x + panel.width * 0.55f;
-        float actionsWidth = panel.xMax - actionsX - 24f;
+        GUI.color = new Color(0.16f, 0.16f, 0.16f, 1f);
+        GUI.DrawTexture(panel, Texture2D.whiteTexture, ScaleMode.StretchToFill, false);
+        GUI.color = Color.white;
+        float actionsWidth = Mathf.Min(360f, panel.width - 48f);
+        float actionsX = panel.x + (panel.width - actionsWidth) * 0.5f;
         float buttonHeight = 48f;
         float buttonSpacing = 10f;
         float buttonsY = panel.y + 124f;
@@ -129,7 +130,7 @@ public class Pause : MonoBehaviour
             GUI.DrawTexture(panel, pauseBackgroundColor.texture, ScaleMode.ScaleToFit, true);
         }
 
-        GUI.Label(new Rect(actionsX, panel.y + 48f, actionsWidth, 54f), "PAUSED", titleStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 48f, panel.width, 54f), "PAUSED", titleStyle);
 
         if (GUI.Button(resumeRect, "Resume", buttonStyle))
         {
@@ -169,28 +170,20 @@ public class Pause : MonoBehaviour
 
     private void EnsureStyles()
     {
-        if (panelStyle != null)
+        if (titleStyle != null && buttonStyle != null)
         {
             return;
         }
 
         pauseBackgroundColor = Resources.Load<Sprite>("Pause/PauseColorLabel");
-
-        panelStyle = new GUIStyle(GUI.skin.box)
-        {
-            normal = { background = MakeTexture(new Color(0.22f, 0.025f, 0.07f, 0.98f)) },
-            border = new RectOffset(0, 0, 0, 0)
-        };
         titleStyle = new GUIStyle(GUI.skin.label)
         {
             alignment = TextAnchor.MiddleCenter,
             fontSize = 32,
             fontStyle = FontStyle.Bold,
-            normal = { textColor = new Color(0.91f, 0.76f, 0.43f) }
+            normal = { textColor = Color.white }
         };
-        Texture2D buttonTexture = MakeTexture(new Color(0.48f, 0.08f, 0.1f));
-        Texture2D highlightedButtonTexture = MakeTexture(new Color(0.83f, 0.68f, 0.39f));
-        Color highlightedTextColor = new Color(0.14f, 0.1f, 0.08f);
+        Texture2D buttonTexture = MakeTexture(new Color(0.3f, 0.3f, 0.3f, 1f));
         buttonStyle = new GUIStyle(GUI.skin.button)
         {
             fontSize = 17,
@@ -203,18 +196,18 @@ public class Pause : MonoBehaviour
             },
             hover =
             {
-                background = highlightedButtonTexture,
-                textColor = highlightedTextColor
+                background = buttonTexture,
+                textColor = Color.white
             },
             active =
             {
-                background = highlightedButtonTexture,
-                textColor = highlightedTextColor
+                background = buttonTexture,
+                textColor = Color.white
             },
             focused =
             {
-                background = highlightedButtonTexture,
-                textColor = highlightedTextColor
+                background = buttonTexture,
+                textColor = Color.white
             },
             onNormal =
             {
@@ -223,18 +216,18 @@ public class Pause : MonoBehaviour
             },
             onHover =
             {
-                background = highlightedButtonTexture,
-                textColor = highlightedTextColor
+                background = buttonTexture,
+                textColor = Color.white
             },
             onActive =
             {
-                background = highlightedButtonTexture,
-                textColor = highlightedTextColor
+                background = buttonTexture,
+                textColor = Color.white
             },
             onFocused =
             {
-                background = highlightedButtonTexture,
-                textColor = highlightedTextColor
+                background = buttonTexture,
+                textColor = Color.white
             }
         };
     }

@@ -1,6 +1,7 @@
 
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class AudioManager : MonoBehaviour
 {
@@ -84,6 +85,7 @@ public class AudioManager : MonoBehaviour
                 }
 
                 musicSource.Stop();
+                musicSource.loop = true;
                 musicSource.clip = musicTracks[i];
                 musicSource.Play();
                 return;
@@ -142,6 +144,61 @@ public class AudioManager : MonoBehaviour
         if (musicVolumeLabel != null)
         {
             musicVolumeLabel.text = $"Music {Mathf.RoundToInt(volume * 100f)}%";
+        }
+    }
+
+    public void BindMenuVolumeControls()
+    {
+        Slider[] sliders = FindObjectsByType<Slider>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (Slider slider in sliders)
+        {
+            bool controlsSound = false;
+            bool controlsMusic = false;
+            bool soundAlreadyBound = false;
+            bool musicAlreadyBound = false;
+
+            for (int i = 0; i < slider.onValueChanged.GetPersistentEventCount(); i++)
+            {
+                string methodName = slider.onValueChanged.GetPersistentMethodName(i);
+                AudioManager target = slider.onValueChanged.GetPersistentTarget(i) as AudioManager;
+
+                if (methodName == nameof(SetSoundVolume))
+                {
+                    controlsSound = true;
+                    soundAlreadyBound |= target == this;
+                }
+                else if (methodName == nameof(SetMusicVolume))
+                {
+                    controlsMusic = true;
+                    musicAlreadyBound |= target == this;
+                }
+            }
+
+            TMP_Text label = slider.GetComponentInChildren<TMP_Text>(true);
+            if (controlsSound)
+            {
+                if (!soundAlreadyBound)
+                {
+                    slider.onValueChanged.AddListener(SetSoundVolume);
+                }
+
+                soundVolumeLabel = label;
+                float volume = PlayerPrefs.GetFloat(soundVolumeKey, 1f);
+                slider.SetValueWithoutNotify(volume);
+                SetSoundVolume(volume);
+            }
+            else if (controlsMusic)
+            {
+                if (!musicAlreadyBound)
+                {
+                    slider.onValueChanged.AddListener(SetMusicVolume);
+                }
+
+                musicVolumeLabel = label;
+                float volume = PlayerPrefs.GetFloat(musicVolumeKey, 1f);
+                slider.SetValueWithoutNotify(volume);
+                SetMusicVolume(volume);
+            }
         }
     }
 }
