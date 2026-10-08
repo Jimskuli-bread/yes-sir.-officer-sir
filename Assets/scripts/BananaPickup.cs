@@ -127,7 +127,7 @@ public class BananaPickup : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
-        if (IsDetectorTarget && other.CompareTag("Player"))
+        if (IsDetectorTarget && other.GetComponentInParent<PlayerPickup>() != null)
         {
             TryCollectDetectorTarget();
         }

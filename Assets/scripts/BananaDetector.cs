@@ -7,7 +7,7 @@ public class BananaDetector : MonoBehaviour
     [SerializeField] private float signalRadius = 12f;
     [SerializeField] private BananaPickup targetBanana;
     [SerializeField] private AudioClip signalClip;
-
+    public GameObject banana;
     private bool targetRevealed;
     private BananaPickup buriedBanana;
     private Vector3 surfacePosition;
@@ -57,6 +57,7 @@ public class BananaDetector : MonoBehaviour
 
     private void Update()
     {
+        banana.SetActive(true);
         if (targetRevealed)
         {
             StopSignal();

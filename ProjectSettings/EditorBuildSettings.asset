@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/JAM.unity
-    guid: cbf6961a7aaa4b54ab5861b413cc3616
+    path: Assets/Scenes/Menu.unity
+    guid: bca716a66b38ba145aac1fa4c3287a3c
   - enabled: 1
     path: Assets/Scenes/Red Chair.unity
     guid: 68b9341714279f44289f0d06a76acb77
@@ -29,9 +29,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Touch Grass.unity
     guid: a682418b9e6e5c340af9a5d5810d266d
-  - enabled: 1
-    path: Assets/Scenes/Menu.unity
-    guid: bca716a66b38ba145aac1fa4c3287a3c
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
