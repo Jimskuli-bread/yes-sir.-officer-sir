@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 public class TouchGrass : MonoBehaviour
 {
     [SerializeField] private Transform grassObject;
-    [SerializeField] private float interactionDistance = 3f;
+    [SerializeField] private float interactionDistance = 6.5f;
 
     private Collider grassCollider;
     private Transform player;

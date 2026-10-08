@@ -264,7 +264,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TouchGrass
   grassObject: {fileID: 638784161}
-  interactionDistance: 3
+  interactionDistance: 6.5
 --- !u!1 &638784160
 GameObject:
   m_ObjectHideFlags: 0
