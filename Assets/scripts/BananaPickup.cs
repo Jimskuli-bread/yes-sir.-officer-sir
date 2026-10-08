@@ -78,7 +78,8 @@ public class BananaPickup : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player"))
+        PlayerPickup playerPickup = other.GetComponentInParent<PlayerPickup>();
+        if (playerPickup == null)
             return;
 
         if (IsDetectorTarget)
@@ -87,13 +88,30 @@ public class BananaPickup : MonoBehaviour
             return;
         }
 
-        if (HasBanana)
+        bool isBananaInspectionScene = SceneManager.GetActiveScene().name == "Banana";
+        if (HasBanana && !isBananaInspectionScene)
             return;
 
-        bool keepInHand = NPC.IsTaskActive(0) || NPC.IsTaskActive(6);
+        if (isBananaInspectionScene)
+        {
+            GameObject previouslyHeldObject = playerPickup.HeldObject;
+            BananaPickup previouslyHeldBanana = previouslyHeldObject != null
+                ? previouslyHeldObject.GetComponent<BananaPickup>()
+                : null;
+
+            if (!playerPickup.ForcePickupObject(gameObject))
+                return;
+
+            if (previouslyHeldBanana != null && previouslyHeldBanana != this)
+                Destroy(previouslyHeldBanana.gameObject);
+
+            RegisterPickup();
+            return;
+        }
+
+        bool keepInHand = NPC.IsTaskActive(0) || NPC.IsTaskActive(4);
         if (keepInHand)
         {
-            PlayerPickup playerPickup = other.GetComponentInParent<PlayerPickup>();
             bool keepPlayerAcrossScenes = NPC.IsTaskActive(0);
             if (playerPickup == null || !playerPickup.TryPickupObject(gameObject, keepPlayerAcrossScenes))
             {
@@ -121,7 +139,7 @@ public class BananaPickup : MonoBehaviour
             return;
 
         returningToOffice = true;
-        NPC.CompleteTaskInLoadedScenes(8);
+        NPC.CompleteTaskInLoadedScenes(6);
         SceneReturnTracker.LoadScene("Office");
     }
 

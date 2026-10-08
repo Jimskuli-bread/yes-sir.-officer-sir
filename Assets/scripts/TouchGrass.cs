@@ -15,10 +15,12 @@ public class TouchGrass : MonoBehaviour
         if (grassObject == null)
             grassObject = transform;
 
-        FPSMovement fpsMovement = FindObjectOfType<FPSMovement>();
-        PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
+        PlayerPickup playerPickup = FindFirstObjectByType<PlayerPickup>();
+        FPSMovement fpsMovement = FindFirstObjectByType<FPSMovement>();
+        PlayerMovement playerMovement = FindFirstObjectByType<PlayerMovement>();
         GameObject taggedPlayer = GameObject.FindGameObjectWithTag("Player");
-        player = fpsMovement != null ? fpsMovement.transform
+        player = playerPickup != null ? playerPickup.transform
+            : fpsMovement != null ? fpsMovement.transform
             : playerMovement != null ? playerMovement.transform
             : taggedPlayer != null ? taggedPlayer.transform
             : null;
@@ -39,13 +41,13 @@ public class TouchGrass : MonoBehaviour
 
     private void Update()
     {
-        if (taskCompleted || !NPC.IsTaskActive(7) || grassObject == null || player == null || !IsNearGrass())
+        if (taskCompleted || !NPC.IsTaskActive(5) || grassObject == null || player == null || !IsNearGrass())
             return;
 
         if (IsInteractPressed())
         {
             taskCompleted = true;
-            NPC.CompleteTaskInLoadedScenes(7);
+            NPC.CompleteTaskInLoadedScenes(5);
             Debug.Log("Grass task completed.", this);
             SceneReturnTracker.ReturnToPreviousScene();
         }

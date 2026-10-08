@@ -7,7 +7,7 @@ public class NPC : MonoBehaviour
     public GameObject banana;
     private const string SecondTaskCompleteKey = "NPC.SecondTaskComplete";
     private const string ThirdTaskCompleteKey = "NPC.ThirdTaskComplete";
-    private const string SeventhTaskCompleteKey = "NPC.SeventhTaskComplete";
+    private const string BananaQuestionTaskCompleteKey = "NPC.SeventhTaskComplete";
     private const string SteveFoundKey = "NPC.SteveFound";
 
     [System.Serializable]
@@ -29,22 +29,22 @@ public class NPC : MonoBehaviour
 
     [Header("Quest Settings")]
     [Tooltip("Edit task dialogue and objectives here. The built-in gameplay events use the default task slots in order.")]
-    public TaskStep[] tasks = new TaskStep[10];
+    public TaskStep[] tasks = new TaskStep[8];
     public float interactionRange = 3f;
     public KeyCode interactKey = KeyCode.E;
     public Transform player;
     [SerializeField] private GameObject bananaPrefab;
     [Header("Quest Testing")]
     [Tooltip("Check a task here to force it complete during play mode.")]
-    [SerializeField] private bool[] testCompleteTasks = new bool[10];
+    [SerializeField] private bool[] testCompleteTasks = new bool[8];
 
     private int currentTaskIndex = 0;
     private bool playerNearby;
     private string currentDialogue = "";
     private bool steveFound;
-    private bool seventhBananaSpawned;
+    private bool bananaQuestionBananaSpawned;
     private bool bananaPrefabWarningShown;
-    private int seventhDialogueStep;
+    private int bananaQuestionDialogueStep;
 
     public GameObject HeldObject => player != null
         ? player.GetComponentInParent<PlayerPickup>()?.HeldObject
@@ -70,10 +70,7 @@ public class NPC : MonoBehaviour
 
     private void Start()
     {
-        if (player == null)
-        {
-            player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        }
+        FindPlayerIfNeeded();
     }
 
     private void Update()
@@ -90,11 +87,12 @@ public class NPC : MonoBehaviour
             banana.SetActive(false);
         }
 
-        if (currentTaskIndex == 6 && !tasks[6].isComplete)
+        if (currentTaskIndex == 4 && !tasks[4].isComplete)
         {
-            EnsureSeventhTaskBanana();
+            EnsureBananaQuestionTaskBanana();
         }
 
+        FindPlayerIfNeeded();
         if (player == null)
             return;
 
@@ -109,6 +107,17 @@ public class NPC : MonoBehaviour
         }
     }
 
+    private void FindPlayerIfNeeded()
+    {
+        if (player != null)
+            return;
+
+        PlayerPickup playerPickup = FindFirstObjectByType<PlayerPickup>();
+        player = playerPickup != null
+            ? playerPickup.transform
+            : GameObject.FindGameObjectWithTag("Player")?.transform;
+    }
+
     private void HandleDialogue()
     {
         if (currentTaskIndex >= tasks.Length)
@@ -118,14 +127,6 @@ public class NPC : MonoBehaviour
         }
 
         TaskStep currentTask = tasks[currentTaskIndex];
-
-        if (currentTaskIndex == 9 && steveFound && !currentTask.isComplete)
-        {
-            CompleteTask(9);
-            currentDialogue = "Screw you, I'm quitting.";
-            SceneReturnTracker.ReturnToPreviousScene();
-            return;
-        }
 
         if (currentTaskIndex == 0 && BananaPickup.HasBanana)
         {
@@ -153,23 +154,31 @@ public class NPC : MonoBehaviour
             return;
         }
 
-        if (currentTaskIndex == 6 && BananaPickup.HasBanana && !currentTask.isComplete)
+        if (currentTaskIndex == 7 && !currentTask.isComplete)
         {
-            if (seventhDialogueStep == 0)
+            CompleteTask(7);
+            currentDialogue = "Screw you, I'm quitting.";
+            SceneReturnTracker.LoadScene("Banana");
+            return;
+        }
+
+        if (currentTaskIndex == 4 && BananaPickup.HasBanana && !currentTask.isComplete)
+        {
+            if (bananaQuestionDialogueStep == 0)
             {
                 currentDialogue = "You: Banana, where did my life choices go wrong?";
-                seventhDialogueStep = 1;
+                bananaQuestionDialogueStep = 1;
                 return;
             }
 
-            CompleteTask(6);
+            CompleteTask(4);
             currentDialogue = "Banana: ...";
             return;
         }
 
-        if (currentTaskIndex == 5 && !currentTask.isComplete && IsHoldingRedChair())
+        if (currentTaskIndex == 3 && !currentTask.isComplete && IsHoldingRedChair())
         {
-            CompleteTask(5);
+            CompleteTask(3);
             currentDialogue = currentTask.completionText;
             return;
         }
@@ -260,8 +269,8 @@ public class NPC : MonoBehaviour
         PlayerPrefs.Save();
         steveFound = false;
         currentTaskIndex = 0;
-        seventhBananaSpawned = false;
-        seventhDialogueStep = 0;
+        bananaQuestionBananaSpawned = false;
+        bananaQuestionDialogueStep = 0;
         currentDialogue = tasks[0].story;
         if (banana != null)
         {
@@ -296,7 +305,7 @@ public class NPC : MonoBehaviour
 
     public static void CompleteTaskInLoadedScenes(int taskIndex)
     {
-        if (taskIndex < 0 || taskIndex >= 10)
+        if (taskIndex < 0 || taskIndex >= 8)
             return;
 
         string completionKey = GetTaskCompleteKey(taskIndex);
@@ -311,6 +320,21 @@ public class NPC : MonoBehaviour
         {
             npc.SetTaskComplete(taskIndex);
         }
+    }
+
+    public static void ResetProgressForNewGame()
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            string completionKey = GetTaskCompleteKey(i);
+            if (completionKey != null)
+                PlayerPrefs.DeleteKey(completionKey);
+        }
+
+        PlayerPrefs.DeleteKey(SteveFoundKey);
+        PlayerPrefs.Save();
+        BananaPickup.ResetBanana();
+        outsidetask.ResetTimersForTesting();
     }
 
     public static void CompleteSecondTask()
@@ -348,30 +372,30 @@ public class NPC : MonoBehaviour
         NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
         foreach (NPC npc in loadedNpcs)
         {
-            if (npc.currentTaskIndex != 5 || npc.player == null ||
+            if (npc.currentTaskIndex != 3 || npc.player == null ||
                 Vector3.Distance(npc.transform.position, npc.player.position) > npc.interactionRange)
             {
                 continue;
             }
 
-            npc.CompleteTask(5);
-            npc.currentDialogue = npc.tasks[5].completionText;
+            npc.CompleteTask(3);
+            npc.currentDialogue = npc.tasks[3].completionText;
             return true;
         }
 
         return false;
     }
 
-    public static void CompleteSeventhTaskWithBanana()
+    public static void CompleteBananaQuestionTaskWithBanana()
     {
         NPC[] loadedNpcs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
         foreach (NPC npc in loadedNpcs)
         {
-            if (npc.currentTaskIndex != 6)
+            if (npc.currentTaskIndex != 4)
                 continue;
 
-            if (!npc.tasks[6].isComplete)
-                npc.CompleteTask(6);
+            if (!npc.tasks[4].isComplete)
+                npc.CompleteTask(4);
 
             npc.AdvanceTask();
         }
@@ -416,8 +440,9 @@ public class NPC : MonoBehaviour
         {
             1 => "Park",
             2 => "guywell",
-            4 => "Red Chair",
-            8 => "Banana detector",
+            3 => "Red Chair",
+            5 => "Touch Grass",
+            6 => "Banana detector",
             _ => null
         };
 
@@ -429,17 +454,14 @@ public class NPC : MonoBehaviour
 
     private static int GetNextTaskIndex()
     {
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 8; i++)
         {
-            if (IsRemovedTask(i))
-                continue;
-
             string completionKey = GetTaskCompleteKey(i);
             if (completionKey == null || PlayerPrefs.GetInt(completionKey, 0) == 0)
                 return i;
         }
 
-        return 10;
+        return 8;
     }
 
     private static void CompleteTaskAcrossScenes(int taskIndex)
@@ -464,8 +486,12 @@ public class NPC : MonoBehaviour
         {
             1 => SecondTaskCompleteKey,
             2 => ThirdTaskCompleteKey,
-            6 => SeventhTaskCompleteKey,
-            >= 0 and < 10 => "NPC.TaskComplete." + taskIndex,
+            0 => "NPC.TaskComplete.0",
+            3 => "NPC.TaskComplete.4",
+            4 => BananaQuestionTaskCompleteKey,
+            5 => "NPC.TaskComplete.7",
+            6 => "NPC.TaskComplete.8",
+            7 => "NPC.TaskComplete.9",
             _ => null
         };
     }
@@ -485,16 +511,16 @@ public class NPC : MonoBehaviour
         }
     }
 
-    private void EnsureSeventhTaskBanana()
+    private void EnsureBananaQuestionTaskBanana()
     {
-        if (seventhBananaSpawned)
+        if (bananaQuestionBananaSpawned)
             return;
 
         if (bananaPrefab == null)
         {
             if (!bananaPrefabWarningShown)
             {
-                Debug.LogWarning("Assign a banana prefab on the NPC to spawn the task-seven banana.");
+                Debug.LogWarning("Assign a banana prefab on the NPC to spawn the banana-question task.");
                 bananaPrefabWarningShown = true;
             }
 
@@ -512,7 +538,7 @@ public class NPC : MonoBehaviour
 
         if (playerPickup != null && BananaPickup.SpawnIntoHand(bananaPrefab, playerPickup))
         {
-            seventhBananaSpawned = true;
+            bananaQuestionBananaSpawned = true;
         }
     }
 
@@ -548,11 +574,6 @@ public class NPC : MonoBehaviour
     public void AdvanceTask()
     {
         currentTaskIndex++;
-        while (currentTaskIndex < tasks.Length && IsRemovedTask(currentTaskIndex))
-        {
-            currentTaskIndex++;
-        }
-
         if (currentTaskIndex < tasks.Length)
         {
             ResetCurrentTaskFlags();
@@ -565,11 +586,6 @@ public class NPC : MonoBehaviour
             currentDialogue = "You finished all tasks!";
             Debug.Log(currentDialogue);
         }
-    }
-
-    private static bool IsRemovedTask(int taskIndex)
-    {
-        return taskIndex == 3 || taskIndex == 5 || taskIndex == 7;
     }
 
     private void ResetCurrentTaskFlags()
@@ -594,9 +610,26 @@ public class NPC : MonoBehaviour
 
     private void CreateDefaultTasks()
     {
-        if (tasks == null || tasks.Length != 10)
+        if (tasks != null && tasks.Length == 10)
         {
-            tasks = new TaskStep[10];
+            tasks = new[] { tasks[0], tasks[1], tasks[2], tasks[4], tasks[6], tasks[7], tasks[8], tasks[9] };
+        }
+        else if (tasks == null || tasks.Length != 8)
+        {
+            tasks = new TaskStep[8];
+        }
+
+        if (testCompleteTasks != null && testCompleteTasks.Length == 10)
+        {
+            testCompleteTasks = new[]
+            {
+                testCompleteTasks[0], testCompleteTasks[1], testCompleteTasks[2], testCompleteTasks[4],
+                testCompleteTasks[6], testCompleteTasks[7], testCompleteTasks[8], testCompleteTasks[9]
+            };
+        }
+        else if (testCompleteTasks == null || testCompleteTasks.Length != 8)
+        {
+            testCompleteTasks = new bool[8];
         }
 
         string[] defaultStories =
@@ -604,9 +637,7 @@ public class NPC : MonoBehaviour
             "I feel like having a banana.",
             "GO OUTSIDE!",
             "You know my ex Pena? He is near our company well at the moment.",
-            "",
             "There is a red chair that you need to go apologize to.",
-            "",
             "You need help so pls go get help.",
             "You have spent too much time on your computer so go touch grass.",
             "Go find a banana using the other banana.",
@@ -618,9 +649,7 @@ public class NPC : MonoBehaviour
             "Objective: Pick up the banana and keep it with you. You may drop it briefly, but don't lose it.",
             "Objective: Stay outside for 30 seconds.",
             "Objective: Throw the guy into the well.",
-            "",
             "Objective: Find the red chair you threw at the wall and apologize to it.",
-            "",
             "Objective: Ask the banana where your life choices went wrong.",
             "Objective: Go outside and touch grass.",
             "Objective: Use another banana and the banana detector to find the first banana.",
@@ -632,9 +661,7 @@ public class NPC : MonoBehaviour
             "Banana secured. You will carry it for the foreseeable future.",
             "Thirty seconds outside have passed. Nobody knows why you were sent out there.",
             "The guy is in the well. You choose not to think too hard about it.",
-            "",
             "You apologized to the chair. It says nothing, but the moment feels sincere.",
-            "",
             "The banana remains silent. Somehow, that feels like an answer.",
             "You touched grass. It was grass.",
             "The detector has led you back to the first banana. Your collection is reunited.",
@@ -651,11 +678,11 @@ public class NPC : MonoBehaviour
                     completionText = defaultCompletion[i]
                 };
 
-            if (tasks[i].story == null)
+            if (string.IsNullOrWhiteSpace(tasks[i].story))
                 tasks[i].story = defaultStories[i];
-            if (tasks[i].objective == null)
+            if (string.IsNullOrWhiteSpace(tasks[i].objective))
                 tasks[i].objective = defaultObjectives[i];
-            if (tasks[i].completionText == null)
+            if (string.IsNullOrWhiteSpace(tasks[i].completionText))
                 tasks[i].completionText = defaultCompletion[i];
 
             tasks[i].storyShown = false;

@@ -119,12 +119,15 @@ public class REDCHAIR : MonoBehaviour
         int requiredApologies = Mathf.Max(1, apologiesRequired);
         bool finished = apologiesCompleted >= requiredApologies;
         string chairResponse = finished
-            ? "Chair: Fine. That's enough. Pick me up with E to continue."
+            ? "Chair: Fine. That's enough. Go back to the office."
             : "Chair: Apology accepted. Pick me up with E and throw me again.";
         ShowDialogue($"You: I'm sorry I threw you.\n{chairResponse}");
 
         if (finished)
-            NPC.CompleteTaskInLoadedScenes(4);
+        {
+            NPC.CompleteTaskInLoadedScenes(3);
+            SceneReturnTracker.ReturnToPreviousScene();
+        }
     }
 
     public void RefusePickup(Transform interactor)

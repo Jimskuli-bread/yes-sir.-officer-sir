@@ -25,7 +25,12 @@ public class PlayerPickup : MonoBehaviour
     private Quaternion heldLocalRotation = Quaternion.identity;
     private bool heldObjectCanRotate;
     private int pickableLayer;
-    private static PlayerPickup persistentPlayer;
+    private static PlayerPickup activePlayer;
+    private static readonly Vector3 officeSpawnPosition = new Vector3(1.13f, 20.84f, -1.977f);
+    private static readonly Vector3 redChairSpawnPosition = new Vector3(651.8785f, 1.03f, 215.303f);
+    private static readonly Vector3 touchGrassSpawnPosition = new Vector3(630.1912f, 2.368f, 209.7296f);
+    private static Quaternion officeSpawnRotation;
+    private static bool hasOfficeSpawn;
     private AudioListener playerAudioListener;
 
     public GameObject HeldObject => heldObject;
@@ -52,27 +57,62 @@ public class PlayerPickup : MonoBehaviour
             }
         }
 
+        if (viewTransform != null)
+        {
+            pickup.holdPoint.SetParent(viewTransform, false);
+            pickup.holdPoint.localPosition = new Vector3(0f, 0f, 1.2f);
+            pickup.holdPoint.localRotation = Quaternion.identity;
+            pickup.holdPoint.localScale = Vector3.one;
+        }
+
         return pickup;
     }
 
     private void Awake()
     {
-        if (persistentPlayer != null && persistentPlayer != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        Transform viewTransform = aimCamera != null
+            ? aimCamera
+            : GetComponentInChildren<Camera>(true)?.transform;
+        EnsureAttached(gameObject, viewTransform);
 
         pickableLayer = LayerMask.NameToLayer("Pickable");
         if (pickableLayer < 0)
-        {
             Debug.LogError("Create a layer named 'Pickable' and assign it to objects the player can pick up.");
+
+        if (!hasOfficeSpawn && SceneManager.GetActiveScene().name == "Office")
+        {
+            officeSpawnRotation = transform.rotation;
+            hasOfficeSpawn = true;
+        }
+        else if (SceneManager.GetActiveScene().name == "Red Chair")
+        {
+            PlaceAtPosition(redChairSpawnPosition);
+        }
+        else if (SceneManager.GetActiveScene().name == "Touch Grass")
+        {
+            PlaceAtPosition(touchGrassSpawnPosition);
         }
 
-        if (aimCamera == null && Camera.main != null)
+        if (activePlayer != null && activePlayer != this)
         {
-            aimCamera = Camera.main.transform;
+            GameObject carriedBanana = activePlayer.HeldObject != null &&
+                                       activePlayer.HeldObject.GetComponent<BananaPickup>() != null
+                ? activePlayer.HeldObject
+                : null;
+
+            if (carriedBanana != null)
+            {
+                activePlayer.DropObject();
+                TryPickupObject(carriedBanana, true);
+            }
+
+            Destroy(activePlayer.gameObject);
         }
+
+        activePlayer = this;
+
+        if (aimCamera == null && Camera.main != null)
+            aimCamera = Camera.main.transform;
 
         playerAudioListener = GetComponentInChildren<AudioListener>(true);
         EnsureSingleAudioListener();
@@ -90,40 +130,38 @@ public class PlayerPickup : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        EnsureSingleAudioListener();
-
         if (scene.name == "Office")
-        {
-            PlacePlayerOnOfficeGround();
-        }
+            PlaceAtOfficeSpawn();
+        else if (scene.name == "Red Chair")
+            PlaceAtPosition(redChairSpawnPosition);
+        else if (scene.name == "Touch Grass")
+            PlaceAtPosition(touchGrassSpawnPosition);
+
+        EnsureSingleAudioListener();
     }
 
-    private void PlacePlayerOnOfficeGround()
+    private void PlaceAtOfficeSpawn()
     {
-        GameObject ground = GameObject.Find("Plane");
-        Collider groundCollider = ground != null ? ground.GetComponent<Collider>() : null;
-        if (groundCollider == null)
+        if (!hasOfficeSpawn)
+        {
+            officeSpawnRotation = transform.rotation;
+            hasOfficeSpawn = true;
+        }
+
+        transform.rotation = officeSpawnRotation;
+        PlaceAtPosition(officeSpawnPosition);
+    }
+
+    private void PlaceAtPosition(Vector3 position)
+    {
+        transform.position = position;
+        Rigidbody body = GetComponent<Rigidbody>();
+        if (body == null)
             return;
 
-        Bounds groundBounds = groundCollider.bounds;
-        Vector3 spawnPosition = new Vector3(
-            groundBounds.center.x,
-            groundBounds.max.y + 1.05f,
-            groundBounds.center.z);
-
-        Rigidbody body = GetComponent<Rigidbody>();
-        if (body != null)
-        {
-            body.linearVelocity = Vector3.zero;
-            body.angularVelocity = Vector3.zero;
-            body.position = spawnPosition;
-        }
-        else
-        {
-            transform.position = spawnPosition;
-        }
-
-        Physics.SyncTransforms();
+        body.position = position;
+        body.linearVelocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
     }
 
     private void EnsureSingleAudioListener()
@@ -159,7 +197,15 @@ public class PlayerPickup : MonoBehaviour
             if (heldObject != null)
             {
                 NPC.TryDeliverRedChair(heldObject);
-                DropObject();
+                if (SceneManager.GetActiveScene().name == "Banana" &&
+                    heldObject.GetComponent<BananaPickup>() != null)
+                {
+                    TryPickup(heldObject);
+                }
+                else
+                {
+                    DropObject();
+                }
             }
             else if (nearbyChair != null)
             {
@@ -169,11 +215,7 @@ public class PlayerPickup : MonoBehaviour
                     string nextSceneName = nearbyChair.nextSceneName;
                     PickupObject(nearbyChair.gameObject);
                     if (completedApologies)
-                    {
-                        persistentPlayer = this;
-                        DontDestroyOnLoad(transform.root.gameObject);
                         SceneReturnTracker.LoadScene(nextSceneName);
-                    }
                 }
                 else
                 {
@@ -215,17 +257,7 @@ public class PlayerPickup : MonoBehaviour
             return false;
 
         Transform heldTransform = heldObject.transform;
-        Transform chairTransform = chair.transform;
-        return heldTransform == chairTransform ||
-               heldTransform.IsChildOf(chairTransform) ||
-               chairTransform.IsChildOf(heldTransform);
-    }
-
-    private static REDCHAIR GetRedChair(GameObject obj)
-    {
-        return obj.GetComponent<REDCHAIR>() ??
-               obj.GetComponentInChildren<REDCHAIR>() ??
-               obj.GetComponentInParent<REDCHAIR>();
+        return heldTransform == chair.transform || heldTransform.IsChildOf(chair.transform);
     }
 
     private bool WasApologyPressed()
@@ -237,30 +269,9 @@ public class PlayerPickup : MonoBehaviour
 #endif
     }
 
-    private void LateUpdate()
-    {
-        if (heldObject == null || holdPoint == null)
-            return;
-
-        Transform heldTransform = heldObject.transform;
-        if (heldTransform.parent != holdPoint)
-        {
-            heldTransform.SetParent(holdPoint, true);
-        }
-
-        heldTransform.localPosition = heldLocalPosition;
-        if (!heldObjectCanRotate)
-        {
-            heldTransform.localRotation = heldLocalRotation;
-        }
-    }
-
     private bool WasPickupPressed()
     {
 #if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current == null)
-            return false;
-
         Key key = pickupKey switch
         {
             KeyCode.E => Key.E,
@@ -270,7 +281,7 @@ public class PlayerPickup : MonoBehaviour
             _ => Key.E
         };
 
-        return Keyboard.current[key].wasPressedThisFrame;
+        return Keyboard.current != null && Keyboard.current[key].wasPressedThisFrame;
 #else
         return Input.GetKeyDown(pickupKey);
 #endif
@@ -295,7 +306,7 @@ public class PlayerPickup : MonoBehaviour
 #endif
     }
 
-    private void TryPickup()
+    private void TryPickup(GameObject objectToIgnore = null)
     {
         if (holdPoint == null)
         {
@@ -313,6 +324,9 @@ public class PlayerPickup : MonoBehaviour
             GameObject candidate = hit.attachedRigidbody != null
                 ? hit.attachedRigidbody.gameObject
                 : hit.gameObject;
+            if (candidate == objectToIgnore)
+                continue;
+
             BananaPickup banana = candidate.GetComponent<BananaPickup>();
             if (banana == null)
                 banana = hit.GetComponentInParent<BananaPickup>();
@@ -339,11 +353,14 @@ public class PlayerPickup : MonoBehaviour
 
         if (closestObject != null)
         {
-            bool keepPlayerAcrossScenes = closestObject.GetComponent<BananaPickup>() != null && NPC.IsTaskActive(0);
-            PickupObject(closestObject, closestGripPoint);
-            if (keepPlayerAcrossScenes)
+            if (heldObject != null)
+                ForcePickupObject(closestObject);
+            else
+                PickupObject(closestObject, closestGripPoint);
+
+            if (closestObject.GetComponent<BananaPickup>() != null && NPC.IsTaskActive(0))
             {
-                persistentPlayer = this;
+                activePlayer = this;
                 DontDestroyOnLoad(transform.root.gameObject);
             }
         }
@@ -396,14 +413,12 @@ public class PlayerPickup : MonoBehaviour
             return false;
 
         if (pickableLayer >= 0)
-        {
             obj.layer = pickableLayer;
-        }
 
         PickupObject(obj);
         if (keepPlayerAcrossScenes)
         {
-            persistentPlayer = this;
+            activePlayer = this;
             DontDestroyOnLoad(transform.root.gameObject);
         }
 
@@ -416,9 +431,7 @@ public class PlayerPickup : MonoBehaviour
             return false;
 
         if (heldObject != null && heldObject != obj)
-        {
             DropObject();
-        }
 
         return TryPickupObject(obj, keepPlayerAcrossScenes);
     }
@@ -487,6 +500,20 @@ public class PlayerPickup : MonoBehaviour
         }
 
         heldObject = null;
+    }
+
+    private static REDCHAIR GetRedChair(GameObject obj)
+    {
+        if (obj == null)
+            return null;
+
+        REDCHAIR redChair = obj.GetComponent<REDCHAIR>();
+        if (redChair == null)
+            redChair = obj.GetComponentInChildren<REDCHAIR>();
+        if (redChair == null)
+            redChair = obj.GetComponentInParent<REDCHAIR>();
+
+        return redChair;
     }
 
     private void SetHeldObjectCollisionIgnored(bool ignore)

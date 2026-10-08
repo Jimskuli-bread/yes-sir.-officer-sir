@@ -18,7 +18,7 @@ public class GameMenu : MonoBehaviour
 
     void Start()
     {
-        Button[] buttons = FindObjectsOfType<Button>(true);
+        Button[] buttons = FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (Button button in buttons)
         {
             button.onClick.AddListener(PlayClickSound);
@@ -60,7 +60,7 @@ public class GameMenu : MonoBehaviour
             AudioManager.instance.StopMusic();
         }
 
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+        SceneManager.LoadScene("Office");
 
     }
 public void QuitGame()

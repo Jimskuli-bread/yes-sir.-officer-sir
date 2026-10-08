@@ -257,7 +257,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 106104634}
+  m_GameObject: {fileID: 638784160}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c3139c6874078f04d94a8de2c15c01c5, type: 3}
@@ -277,6 +277,7 @@ GameObject:
   - component: {fileID: 638784164}
   - component: {fileID: 638784163}
   - component: {fileID: 638784162}
+  - component: {fileID: 106104635}
   m_Layer: 0
   m_Name: Plane (1)
   m_TagString: Untagged
@@ -346,7 +347,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: e9d1a3bca95397149a6f1d06ab7c442a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -392,7 +393,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 744691924575730070, guid: 410f4d3c15cf82f418f7063439238ece, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.93
+      value: 2.368
       objectReference: {fileID: 0}
     - target: {fileID: 744691924575730070, guid: 410f4d3c15cf82f418f7063439238ece, type: 3}
       propertyPath: m_LocalPosition.z
@@ -433,10 +434,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8514406918151106316, guid: 410f4d3c15cf82f418f7063439238ece, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 106104635}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 410f4d3c15cf82f418f7063439238ece, type: 3}
 --- !u!1 &954706831
 GameObject:
@@ -449,7 +447,7 @@ GameObject:
   - component: {fileID: 954706835}
   - component: {fileID: 954706834}
   - component: {fileID: 954706833}
-  - component: {fileID: 954706832}
+  - component: {fileID: 954706836}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -457,28 +455,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!64 &954706832
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 954706831}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!23 &954706833
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -504,7 +480,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: e9d1a3bca95397149a6f1d06ab7c442a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -545,12 +521,33 @@ Transform:
   m_GameObject: {fileID: 954706831}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 620.1634, y: 0, z: 220.30382}
+  m_LocalPosition: {x: 620.1634, y: 0.97, z: 220.30382}
   m_LocalScale: {x: 3.4042, y: 3.4042, z: 3.4042}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &954706836
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 954706831}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 9.999999, y: 2.2204459e-16, z: 9.999999}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
