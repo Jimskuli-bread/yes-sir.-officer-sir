@@ -55,6 +55,11 @@ public class GameMenu : MonoBehaviour
     {
 
         PlayClickSound();
+        if (AudioManager.instance != null)
+        {
+            AudioManager.instance.StopMusic();
+        }
+
         SceneManager.LoadScene("Office");
 
     }

@@ -107,6 +107,14 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    public void StopMusic()
+    {
+        if (musicSource != null)
+        {
+            musicSource.Stop();
+        }
+    }
+
     public void SetSoundVolume(float volume)
     {
         volume = Mathf.Clamp01(volume);
