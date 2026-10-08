@@ -21,7 +21,7 @@ public class RedChairQuest : MonoBehaviour
 
     private void Update()
     {
-        if (!hitWall || !NPC.IsTaskActive(4))
+        if (!hitWall || !NPC.IsTaskActive(3))
             return;
 
         if (player == null)
@@ -38,7 +38,7 @@ public class RedChairQuest : MonoBehaviour
 
         if (WasInteractPressed())
         {
-            NPC.CompleteTaskInLoadedScenes(4);
+            NPC.CompleteTaskInLoadedScenes(3);
             SceneReturnTracker.ReturnToPreviousScene();
         }
     }

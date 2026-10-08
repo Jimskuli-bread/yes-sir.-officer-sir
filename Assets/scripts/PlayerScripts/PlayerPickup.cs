@@ -26,6 +26,10 @@ public class PlayerPickup : MonoBehaviour
     private bool heldObjectCanRotate;
     private int pickableLayer;
     private static PlayerPickup persistentPlayer;
+    private static readonly Vector3 officeSpawnPosition = new Vector3(1.13f, 20.84f, -1.977f);
+    private static readonly Vector3 redChairSpawnPosition = new Vector3(651.8785f, 1.03f, 215.303f);
+    private static Quaternion officeSpawnRotation;
+    private static bool hasOfficeSpawn;
     private AudioListener playerAudioListener;
 
     public GameObject HeldObject => heldObject;
@@ -57,6 +61,17 @@ public class PlayerPickup : MonoBehaviour
 
     private void Awake()
     {
+        if (!hasOfficeSpawn && SceneManager.GetActiveScene().name == "Office")
+        {
+            officeSpawnRotation = transform.rotation;
+            hasOfficeSpawn = true;
+            PlaceAtOfficeSpawn();
+        }
+        else if (SceneManager.GetActiveScene().name == "Red Chair")
+        {
+            PlaceAtPosition(redChairSpawnPosition);
+        }
+
         if (persistentPlayer != null && persistentPlayer != this)
         {
             Destroy(gameObject);
@@ -90,7 +105,30 @@ public class PlayerPickup : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        if (scene.name == "Office" && hasOfficeSpawn)
+            PlaceAtOfficeSpawn();
+        else if (scene.name == "Red Chair")
+            PlaceAtPosition(redChairSpawnPosition);
+
         EnsureSingleAudioListener();
+    }
+
+    private void PlaceAtOfficeSpawn()
+    {
+        transform.rotation = officeSpawnRotation;
+        PlaceAtPosition(officeSpawnPosition);
+    }
+
+    private void PlaceAtPosition(Vector3 position)
+    {
+        transform.position = position;
+        Rigidbody body = GetComponent<Rigidbody>();
+        if (body == null)
+            return;
+
+        body.position = position;
+        body.linearVelocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
     }
 
     private void EnsureSingleAudioListener()

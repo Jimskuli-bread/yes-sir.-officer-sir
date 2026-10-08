@@ -10,7 +10,7 @@ public class QuestTaskTrigger : MonoBehaviour
     }
 
     [SerializeField] private TriggerAction action;
-    [SerializeField, Range(1, 10)] private int taskNumber = 8;
+    [SerializeField, Range(1, 8)] private int taskNumber = 6;
 
     private void Awake()
     {

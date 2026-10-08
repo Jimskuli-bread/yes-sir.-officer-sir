@@ -76,6 +76,9 @@ public class Pause : MonoBehaviour
 
     private void Update()
     {
+        if (InspectaBanana.IsEnding)
+            return;
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             SetPaused(!isPaused);

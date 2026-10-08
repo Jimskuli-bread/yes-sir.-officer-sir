@@ -90,7 +90,7 @@ public class BananaPickup : MonoBehaviour
         if (HasBanana)
             return;
 
-        bool keepInHand = NPC.IsTaskActive(0) || NPC.IsTaskActive(6);
+        bool keepInHand = NPC.IsTaskActive(0) || NPC.IsTaskActive(4);
         if (keepInHand)
         {
             PlayerPickup playerPickup = other.GetComponentInParent<PlayerPickup>();
@@ -121,7 +121,7 @@ public class BananaPickup : MonoBehaviour
             return;
 
         returningToOffice = true;
-        NPC.CompleteTaskInLoadedScenes(8);
+        NPC.CompleteTaskInLoadedScenes(6);
         SceneReturnTracker.LoadScene("Office");
     }
 

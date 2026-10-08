@@ -55,7 +55,7 @@ public class GameMenu : MonoBehaviour
     {
 
         PlayClickSound();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+        SceneManager.LoadScene("Office");
 
     }
 public void QuitGame()
